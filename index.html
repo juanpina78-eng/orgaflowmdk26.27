@@ -4,222 +4,309 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organigrama Interactivo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-      body { 
-        font-family: 'Inter', sans-serif; 
-        background-color: #f8fafc; 
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-      }
-      .node-card { transition: all 0.3s ease-out; }
-      .node-card:hover { transform: translateY(-3px); filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)); stroke: #93c5fd; }
-      .node-name:hover { fill: #1d4ed8; }
-      .node-indicator:hover { fill: #3b82f6; }
+      body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden; }
+      .node-card { transition: all 0.3s ease-out; cursor: pointer; }
+      .node-card:hover { transform: translateY(-3px); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2)); }
+      .node-card.highlighted { stroke: #fbbf24; stroke-width: 3; filter: drop-shadow(0 0 12px #fbbf24); }
+      .search-input { transition: all 0.3s; }
+      .search-input:focus { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+      #modal { backdrop-filter: blur(8px); }
+      .fade-in { animation: fadeIn 0.3s; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
-    <div id="chart-container" style="width: 100vw; height: 100vh;"></div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<body class="w-screen h-screen">
+    <!-- Panel de Control Superior -->
+    <div class="absolute top-0 left-0 right-0 z-50 bg-white shadow-lg fade-in">
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex flex-wrap gap-3 items-center justify-between">
+          <!-- Búsqueda -->
+          <div class="flex-1 min-w-64">
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="🔍 Buscar por nombre, puesto o departamento..." 
+              class="search-input w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-sm"
+            />
+          </div>
+          
+          <!-- Filtros por Departamento -->
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="filterDept('all')" class="dept-btn px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
+              📊 Todos
+            </button>
+            <button onclick="filterDept('Producto')" class="dept-btn px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-xs font-semibold hover:bg-gray-300 transition">
+              🎨 Producto
+            </button>
+            <button onclick="filterDept('RRHH')" class="dept-btn px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-xs font-semibold hover:bg-gray-300 transition">
+              👥 RRHH
+            </button>
+          </div>
+          
+          <!-- Controles de Navegación -->
+          <div class="flex gap-2">
+            <button onclick="resetZoom()" class="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition">
+              🏠 Inicio
+            </button>
+            <button onclick="zoomIn()" class="px-3 py-2 bg-gray-700 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition">
+              ➕
+            </button>
+            <button onclick="zoomOut()" class="px-3 py-2 bg-gray-700 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition">
+              ➖
+            </button>
+          </div>
+        </div>
+        
+        <!-- Contador de Empleados -->
+        <div class="mt-3 text-sm text-gray-600">
+          <span id="employeeCount">Cargando empleados...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor del Organigrama -->
+    <div id="chart-container" class="w-full h-full pt-32"></div>
+
+    <!-- Modal de Detalles -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeModal(event)">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 fade-in" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-start mb-4">
+          <h2 id="modalName" class="text-2xl font-bold text-gray-800"></h2>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">💼</span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Puesto</p>
+              <p id="modalRole" class="text-base font-semibold text-gray-800"></p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🏢</span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Departamento</p>
+              <p id="modalDept" class="text-base font-semibold text-gray-800"></p>
+            </div>
+          </div>
+          <div id="modalEmailSection" class="flex items-center gap-3 hidden">
+            <span class="text-3xl">✉️</span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+              <a id="modalEmail" href="#" class="text-base font-semibold text-blue-600 hover:underline"></a>
+            </div>
+          </div>
+          <div id="modalPhoneSection" class="flex items-center gap-3 hidden">
+            <span class="text-3xl">📞</span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Teléfono</p>
+              <p id="modalPhone" class="text-base font-semibold text-gray-800"></p>
+            </div>
+          </div>
+          <div id="modalReportsSection" class="flex items-center gap-3">
+            <span class="text-3xl">👥</span>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Reportes Directos</p>
+              <p id="modalReports" class="text-base font-semibold text-gray-800"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
-      // Verificar que D3 se cargó correctamente
-      if (typeof d3 === 'undefined') {
-        document.getElementById('chart-container').innerHTML = '<div style="padding: 20px; text-align: center; font-size: 18px;">Error: No se pudo cargar la librería D3. Por favor, recarga la página.</div>';
-        throw new Error('D3 no se cargó correctamente');
-      }
-
-      // Datos del organigrama
-      const data = {
-        "name": "MIGUEL PINA",
-        "role": "Chief Executive Officer (CEO)",
-        "department": "Producto",
-        "children": [
-          {
-            "name": "LUIS_MIGUEL MARTINEZ",
-            "role": "Global Product Manager",
-            "department": "Producto",
-            "children": [
-              {
-                "name": "ANDRES CLIMENT",
-                "role": "Design Engineer Lead",
-                "department": "Producto",
-                "children": [
-                  {
-                    "name": "MANUEL JURADO",
-                    "role": "Ingeniero diseño industrial Jr",
-                    "department": "Producto"
-                  }
-                ]
-              },
-              {
-                "name": "SALVADOR MANCHÓN",
-                "role": "Product Manager Senior",
-                "department": "Producto",
-                "children": [
-                  {
-                    "name": "FRANCISCO_JAVIER MARTINEZ",
-                    "role": "Mecánica Process Manager A",
-                    "department": "Producto"
-                  },
-                  {
-                    "name": "ALEJANDRO SOLA",
-                    "role": "Adjunto Product Manager",
-                    "department": "Producto"
-                  },
-                  {
-                    "name": "JAVIER ALFARO",
-                    "role": "Adjunto Product Manager II",
-                    "department": "Producto"
-                  }
-                ]
-              },
-              {
-                "name": "JOSE_JUAN GINER",
-                "role": "Quality Manager",
-                "department": "Producto",
-                "children": [
-                  {
-                    "name": "JOSE_LUIS NOGALES",
-                    "role": "Quality Supervisor",
-                    "department": "Producto"
-                  }
-                ]
-              },
-              {
-                "name": "LEME, RICARDO",
-                "role": "CTG Design Manager",
-                "department": "Producto",
-                "children": [
-                  {
-                    "name": "CESAR GONZALEZ",
-                    "role": "CTG Junior Designer",
-                    "department": "Producto"
-                  }
-                ]
-              },
-              {
-                "name": "ISRAEL ROMERO",
-                "role": "Product and comm. Manager",
-                "department": "Producto"
-              }
-            ]
-          },
-          {
-            "name": "JUAN PINA",
-            "role": "Director de RRHH",
-            "department": "RRHH",
-            "children": [
-              {
-                "name": "ALBA PLANELLES",
-                "role": "Laboral",
-                "department": "RRHH"
-              },
-              {
-                "name": "ANDRÉS GIL",
-                "role": "Filiales",
-                "department": "RRHH"
-              }
-            ]
-          }
-        ]
-      };
+      // ============================================
+      // CONFIGURACIÓN - CAMBIA ESTA URL POR LA DE TU GOOGLE SHEET
+      // ============================================
+      const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8J3mLYgKthZhW4y4w75nyF5RWAv47pPZV_bsiq10EoekSqy00ERQHxJ5rUPEHTmVSfob44sWjWGzt/pub?gid=1165827751&single=true&output=csv';
       
-      // Configuración del organigrama
-      const CARD_WIDTH = 280;
-      const CARD_HEIGHT = 100;
-      const SPACING_V = 130;
-      const SPACING_H = 350;
+      // Para modo de prueba con datos embebidos, usar esto:
+      const USE_EMBEDDED_DATA = false;
+      
+      // Datos de ejemplo embebidos (se usarán si USE_EMBEDDED_DATA = true)
+      const embeddedData = [
+        {name: "MIGUEL PINA", role: "Chief Executive Officer (CEO)", department: "Producto", manager: "", email: "miguel.pina@empresa.com", phone: "+34 600 000 000"},
+        {name: "LUIS_MIGUEL MARTINEZ", role: "Global Product Manager", department: "Producto", manager: "MIGUEL PINA", email: "luis.martinez@empresa.com", phone: ""},
+        {name: "ANDRES CLIMENT", role: "Design Engineer Lead", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
+        {name: "MANUEL JURADO", role: "Ingeniero diseño industrial Jr", department: "Producto", manager: "ANDRES CLIMENT", email: "", phone: ""},
+        {name: "SALVADOR MANCHÓN", role: "Product Manager Senior", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
+        {name: "FRANCISCO_JAVIER MARTINEZ", role: "Mecánica Process Manager A", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
+        {name: "ALEJANDRO SOLA", role: "Adjunto Product Manager", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
+        {name: "JAVIER ALFARO", role: "Adjunto Product Manager II", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
+        {name: "JOSE_JUAN GINER", role: "Quality Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
+        {name: "JOSE_LUIS NOGALES", role: "Quality Supervisor", department: "Producto", manager: "JOSE_JUAN GINER", email: "", phone: ""},
+        {name: "LEME, RICARDO", role: "CTG Design Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
+        {name: "CESAR GONZALEZ", role: "CTG Junior Designer", department: "Producto", manager: "LEME, RICARDO", email: "", phone: ""},
+        {name: "ISRAEL ROMERO", role: "Product and comm. Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
+        {name: "JUAN PINA", role: "Director de RRHH", department: "RRHH", manager: "MIGUEL PINA", email: "juan.pina@empresa.com", phone: "+34 600 111 111"},
+        {name: "ALBA PLANELLES", role: "Laboral", department: "RRHH", manager: "JUAN PINA", email: "", phone: ""},
+        {name: "ANDRÉS GIL", role: "Filiales", department: "RRHH", manager: "JUAN PINA", email: "", phone: ""}
+      ];
 
+      // Variables globales
+      let allData = [];
+      let currentFilter = 'all';
+      let svg, g, zoom, root, tree;
+      
+      const CARD_WIDTH = 240;
+      const CARD_HEIGHT = 80;
+      const SPACING_V = 110;
+      const SPACING_H = 320;
       const width = window.innerWidth;
       const height = window.innerHeight;
 
-      const svg = d3.select("#chart-container").append("svg")
-        .attr("viewBox", [-width / 2, -height / 2, width, height])
-        .style("width", "100%")
-        .style("height", "100%");
+      // Función para convertir CSV plano a estructura jerárquica
+      function buildHierarchy(flatData) {
+        const map = {};
+        const roots = [];
+        
+        // Crear mapa de todos los nodos
+        flatData.forEach(person => {
+          map[person.name] = {
+            name: person.name,
+            role: person.role,
+            department: person.department,
+            email: person.email || '',
+            phone: person.phone || '',
+            children: []
+          };
+        });
+        
+        // Construir jerarquía
+        flatData.forEach(person => {
+          if (person.manager && map[person.manager]) {
+            map[person.manager].children.push(map[person.name]);
+          } else {
+            roots.push(map[person.name]);
+          }
+        });
+        
+        return roots.length === 1 ? roots[0] : { name: "Organización", role: "", department: "", children: roots };
+      }
 
-      const g = svg.append("g");
-      
-      const zoom = d3.zoom()
-        .scaleExtent([0.1, 4])
-        .on("zoom", (e) => g.attr("transform", e.transform));
-      
-      svg.call(zoom);
-      svg.call(zoom.transform, d3.zoomIdentity.translate(width/4, height/2).scale(0.8));
+      // Cargar datos
+      async function loadData() {
+        try {
+          if (USE_EMBEDDED_DATA) {
+            allData = embeddedData;
+            initializeChart();
+          } else {
+            const response = await fetch(CSV_URL);
+            const csvText = await response.text();
+            Papa.parse(csvText, {
+              header: true,
+              skipEmptyLines: true,
+              complete: function(results) {
+                allData = results.data;
+                initializeChart();
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error cargando datos:', error);
+          document.getElementById('employeeCount').innerHTML = 
+            '<span class="text-red-600">⚠️ Error: Verifica la URL del CSV o usa datos embebidos</span>';
+        }
+      }
 
-      const root = d3.hierarchy(data);
-      const tree = d3.tree().nodeSize([SPACING_V, SPACING_H]);
-      tree(root);
+      // Inicializar el organigrama
+      function initializeChart() {
+        document.getElementById('employeeCount').textContent = 
+          `👥 Total: ${allData.length} empleados`;
+        
+        svg = d3.select("#chart-container").append("svg")
+          .attr("viewBox", [-width / 2, -height / 2, width, height])
+          .style("width", "100%")
+          .style("height", "100%");
 
-      // Links
-      g.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#cbd5e1")
-        .attr("stroke-opacity", 0.6)
-        .attr("stroke-width", 1.5)
-        .selectAll("path")
-        .data(root.links())
-        .join("path")
-        .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+        g = svg.append("g");
+        
+        zoom = d3.zoom()
+          .scaleExtent([0.1, 4])
+          .on("zoom", (e) => g.attr("transform", e.transform));
+        
+        svg.call(zoom);
+        
+        renderChart(allData);
+        resetZoom();
+      }
 
-      // Nodes
-      const node = g.append("g")
-        .selectAll("g")
-        .data(root.descendants())
-        .join("g")
-        .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
-        .attr("class", "group cursor-pointer");
+      // Renderizar organigrama
+      function renderChart(data) {
+        g.selectAll("*").remove();
+        
+        const hierarchyData = buildHierarchy(data);
+        root = d3.hierarchy(hierarchyData);
+        tree = d3.tree().nodeSize([SPACING_V, SPACING_H]);
+        tree(root);
 
-      // Card
-      node.append("rect")
-        .attr("width", CARD_WIDTH)
-        .attr("height", CARD_HEIGHT)
-        .attr("x", 0)
-        .attr("y", -CARD_HEIGHT / 2)
-        .attr("rx", 12)
-        .attr("fill", "white")
-        .attr("stroke", "#e2e8f0")
-        .attr("stroke-width", 1)
-        .attr("class", "node-card shadow-sm");
+        // Links
+        g.append("g")
+          .attr("fill", "none")
+          .attr("stroke", "#cbd5e1")
+          .attr("stroke-opacity", 0.6)
+          .attr("stroke-width", 2)
+          .selectAll("path")
+          .data(root.links())
+          .join("path")
+          .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
 
-      // Color Marker
-      const colors = ["#2563eb", "#0ea5e9", "#8b5cf6", "#f59e0b", "#10b981", "#ec4899"];
-      node.append("rect")
-        .attr("width", 4)
-        .attr("height", CARD_HEIGHT - 32)
-        .attr("x", 12)
-        .attr("y", -(CARD_HEIGHT / 2) + 16)
-        .attr("rx", 2)
-        .attr("fill", d => colors[d.depth % colors.length]);
+        // Nodes
+        const node = g.append("g")
+          .selectAll("g")
+          .data(root.descendants())
+          .join("g")
+          .attr("transform", d => `translate(${d.y},${d.x})`)
+          .attr("class", "node-group");
 
-      // Name
-      node.append("text")
-        .attr("dy", -18)
-        .attr("x", 28)
-        .text(d => d.data.name)
-        .attr("class", "node-name")
-        .attr("font-weight", "bold")
-        .attr("fill", "#1e293b")
-        .attr("font-size", "13px");
+        // Card
+        node.append("rect")
+          .attr("width", CARD_WIDTH)
+          .attr("height", CARD_HEIGHT)
+          .attr("x", 0)
+          .attr("y", -CARD_HEIGHT / 2)
+          .attr("rx", 12)
+          .attr("fill", "white")
+          .attr("stroke", "#e2e8f0")
+          .attr("stroke-width", 2)
+          .attr("class", "node-card")
+          .on("click", (event, d) => showModal(d.data));
 
-      // Role (Wrapped)
-      node.each(function(d) {
+        // Color Marker
+        const colors = ["#2563eb", "#0ea5e9", "#8b5cf6", "#f59e0b", "#10b981", "#ec4899"];
+        node.append("rect")
+          .attr("width", 4)
+          .attr("height", CARD_HEIGHT - 32)
+          .attr("x", 12)
+          .attr("y", -(CARD_HEIGHT / 2) + 16)
+          .attr("rx", 2)
+          .attr("fill", d => colors[d.depth % colors.length]);
+
+        // Name
+        node.append("text")
+          .attr("dy", -8)
+          .attr("x", 28)
+          .text(d => d.data.name)
+          .attr("class", "font-bold fill-slate-800 text-sm");
+
+        // Role (Wrapped)
+        node.each(function(d) {
           const el = d3.select(this);
           const roleText = el.append("text")
-             .attr("x", 28)
-             .attr("y", 2)
-             .attr("fill", "#64748b")
-             .attr("font-size", "11px")
-             .attr("font-weight", "500");
+            .attr("x", 28)
+            .attr("y", 8)
+            .attr("class", "fill-slate-500 text-[10px] font-medium uppercase tracking-wide");
 
           const words = d.data.role.split(/\s+/).reverse();
           let line = [];
-          const lineHeight = 1.3;
-          const maxWidth = CARD_WIDTH - 50;
-          let tspan = roleText.append("tspan").attr("x", 28).attr("dy", 0);
+          const lineHeight = 1.2;
+          const maxWidth = CARD_WIDTH - 40;
+          let tspan = roleText.append("tspan").attr("x", 28).attr("dy", 0 + "em");
           
           let word;
           while ((word = words.pop())) {
@@ -232,28 +319,134 @@
               tspan = roleText.append("tspan").attr("x", 28).attr("dy", lineHeight + "em").text(word);
             }
           }
+        });
+
+        // Department
+        node.filter(d => d.data.department).append("text")
+          .attr("y", (CARD_HEIGHT / 2) - 12)
+          .attr("x", 28)
+          .text(d => d.data.department)
+          .attr("class", "fill-slate-400 text-[9px] font-semibold");
+
+        // Indicator de hijos
+        node.filter(d => d.children && d.children.length > 0).append("g")
+          .attr("transform", `translate(${CARD_WIDTH}, 0)`)
+          .call(g => {
+            g.append("circle")
+              .attr("r", 12)
+              .attr("fill", "#3b82f6")
+              .attr("stroke", "white")
+              .attr("stroke-width", 2);
+            g.append("text")
+              .attr("text-anchor", "middle")
+              .attr("dy", "0.35em")
+              .attr("class", "fill-white text-[10px] font-bold")
+              .text(d => d.children.length);
+          });
+      }
+
+      // Búsqueda
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        d3.selectAll('.node-card').classed('highlighted', false);
+        
+        if (searchTerm === '') return;
+        
+        d3.selectAll('.node-group').each(function(d) {
+          const matches = 
+            d.data.name.toLowerCase().includes(searchTerm) ||
+            d.data.role.toLowerCase().includes(searchTerm) ||
+            (d.data.department && d.data.department.toLowerCase().includes(searchTerm));
+          
+          if (matches) {
+            d3.select(this).select('.node-card').classed('highlighted', true);
+          }
+        });
       });
 
-      // Department
-      node.filter(d => d.data.department).append("text")
-        .attr("y", (CARD_HEIGHT / 2) - 16)
-        .attr("x", 28)
-        .text(d => d.data.department)
-        .attr("fill", "#94a3b8")
-        .attr("font-size", "10px")
-        .attr("font-weight", "600");
+      // Filtro por departamento
+      function filterDept(dept) {
+        currentFilter = dept;
+        
+        // Actualizar botones
+        document.querySelectorAll('.dept-btn').forEach(btn => {
+          btn.classList.remove('bg-blue-600', 'text-white');
+          btn.classList.add('bg-gray-200', 'text-gray-800');
+        });
+        event.target.classList.remove('bg-gray-200', 'text-gray-800');
+        event.target.classList.add('bg-blue-600', 'text-white');
+        
+        // Filtrar datos
+        const filtered = dept === 'all' 
+          ? allData 
+          : allData.filter(p => p.department === dept);
+        
+        document.getElementById('employeeCount').textContent = 
+          `👥 Mostrando: ${filtered.length} de ${allData.length} empleados`;
+        
+        renderChart(filtered);
+      }
 
-      // Indicator
-      node.filter(d => !!d.children || !!d.data.children).append("circle")
-        .attr("cx", CARD_WIDTH)
-        .attr("cy", 0)
-        .attr("r", 4)
-        .attr("fill", "#cbd5e1")
-        .attr("stroke", "white")
-        .attr("stroke-width", 2)
-        .attr("class", "node-indicator transition-colors");
+      // Modal de detalles
+      function showModal(data) {
+        document.getElementById('modalName').textContent = data.name;
+        document.getElementById('modalRole').textContent = data.role;
+        document.getElementById('modalDept').textContent = data.department || 'N/A';
+        
+        // Email
+        if (data.email) {
+          document.getElementById('modalEmailSection').classList.remove('hidden');
+          document.getElementById('modalEmail').textContent = data.email;
+          document.getElementById('modalEmail').href = `mailto:${data.email}`;
+        } else {
+          document.getElementById('modalEmailSection').classList.add('hidden');
+        }
+        
+        // Teléfono
+        if (data.phone) {
+          document.getElementById('modalPhoneSection').classList.remove('hidden');
+          document.getElementById('modalPhone').textContent = data.phone;
+        } else {
+          document.getElementById('modalPhoneSection').classList.add('hidden');
+        }
+        
+        // Reportes directos
+        const reports = data.children ? data.children.length : 0;
+        document.getElementById('modalReports').textContent = reports === 0 ? 'Ninguno' : reports;
+        
+        document.getElementById('modal').classList.remove('hidden');
+      }
 
-      console.log('Organigrama cargado correctamente');
+      function closeModal(event) {
+        if (!event || event.target.id === 'modal') {
+          document.getElementById('modal').classList.add('hidden');
+        }
+      }
+
+      // Controles de zoom
+      function resetZoom() {
+        svg.transition().duration(750).call(
+          zoom.transform,
+          d3.zoomIdentity.translate(width/4, height/2).scale(0.8)
+        );
+      }
+
+      function zoomIn() {
+        svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+      }
+
+      function zoomOut() {
+        svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+      }
+
+      // Cerrar modal con ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+
+      // Inicializar
+      loadData();
     </script>
 </body>
 </html>
