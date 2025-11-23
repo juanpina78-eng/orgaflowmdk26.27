@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organigrama Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
+      .node-card { transition: all 0.3s ease-out; }
+      .node-card:hover { transform: translateY(-3px); filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)); stroke: #93c5fd; }
+      .node-name:hover { fill: #1d4ed8; }
+      .node-indicator:hover { fill: #3b82f6; }
+    </style>
+</head>
+<body class="w-screen h-screen">
+    <div id="chart-container" class="w-full h-full"></div>
+    <script src="data.js"></script>
+    <script>
+      
+      // Updated dimensions for HTML export
+      const CARD_WIDTH = 240;
+      const CARD_HEIGHT = 80;
+      const SPACING_V = 110;
+      const SPACING_H = 320;
+
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      const svg = d3.select("#chart-container").append("svg")
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .style("width", "100%")
+        .style("height", "100%");
+
+      const g = svg.append("g");
+      
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (e) => g.attr("transform", e.transform));
+      
+      svg.call(zoom);
+      svg.call(zoom.transform, d3.zoomIdentity.translate(width/4, height/2).scale(0.8));
+
+      const root = d3.hierarchy(data);
+      const tree = d3.tree().nodeSize([SPACING_V, SPACING_H]);
+      tree(root);
+
+      // Links
+      g.append("g")
+        .attr("fill", "none")
+        .attr("stroke", "#cbd5e1")
+        .attr("stroke-opacity", 0.6)
+        .attr("stroke-width", 1.5)
+        .selectAll("path")
+        .data(root.links())
+        .join("path")
+        .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+
+      // Nodes
+      const node = g.append("g")
+        .selectAll("g")
+        .data(root.descendants())
+        .join("g")
+        .attr("transform", d => "translate(" + d.y + "," + d.x + ")")
+        .attr("class", "group cursor-pointer");
+
+      // Card
+      node.append("rect")
+        .attr("width", CARD_WIDTH)
+        .attr("height", CARD_HEIGHT)
+        .attr("x", 0)
+        .attr("y", -CARD_HEIGHT / 2)
+        .attr("rx", 12)
+        .attr("fill", "white")
+        .attr("stroke", "#e2e8f0")
+        .attr("stroke-width", 1)
+        .attr("class", "node-card shadow-sm");
+
+      // Color Marker
+      const colors = ["#2563eb", "#0ea5e9", "#8b5cf6", "#f59e0b", "#10b981", "#ec4899"];
+      node.append("rect")
+        .attr("width", 4)
+        .attr("height", CARD_HEIGHT - 32)
+        .attr("x", 12)
+        .attr("y", -(CARD_HEIGHT / 2) + 16)
+        .attr("rx", 2)
+        .attr("fill", d => colors[d.depth % colors.length]);
+
+      // Name
+      node.append("text")
+        .attr("dy", -8)
+        .attr("x", 28)
+        .text(d => d.data.name)
+        .attr("class", "node-name font-bold fill-slate-800 text-sm transition-colors");
+
+      // Role (Wrapped)
+      node.each(function(d) {
+          const el = d3.select(this);
+          const roleText = el.append("text")
+             .attr("x", 28)
+             .attr("y", 8)
+             .attr("class", "fill-slate-500 text-[10px] font-medium uppercase tracking-wide");
+
+          const words = d.data.role.split(/\s+/).reverse();
+          let line = [];
+          const lineHeight = 1.2;
+          const width = CARD_WIDTH - 40;
+          let tspan = roleText.append("tspan").attr("x", 28).attr("dy", 0 + "em");
+          
+          let word;
+          while ((word = words.pop())) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+              line.pop();
+              tspan.text(line.join(" "));
+              line = [word];
+              tspan = roleText.append("tspan").attr("x", 28).attr("dy", lineHeight + "em").text(word);
+            }
+          }
+      });
+
+      // Department
+      node.filter(d => d.data.department).append("text")
+        .attr("y", (CARD_HEIGHT / 2) - 12)
+        .attr("x", 28)
+        .text(d => d.data.department)
+        .attr("class", "fill-slate-400 text-[9px] font-semibold");
+
+      // Indicator
+      node.filter(d => !!d.children || !!d.data.children).append("circle")
+        .attr("cx", CARD_WIDTH)
+        .attr("cy", 0)
+        .attr("r", 4)
+        .attr("fill", "#cbd5e1")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2)
+        .attr("class", "node-indicator transition-colors");
+
+    </script>
+</body>
+</html>
