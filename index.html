@@ -224,594 +224,469 @@
             <input 
               type="text" 
               id="searchInput" 
-              placeholder="🔍 Search employee by name, role or department..." 
-              class="search-input w-full px-4 py-3 rounded-lg text-sm font-medium"
-            />
+              class="search-input w-full px-4 py-3 rounded-lg text-sm"
+              placeholder="🔍 Search by name, position or department..."
+              oninput="searchEmployee(this.value)"
+            >
           </div>
           
-          <!-- Filtros por Departamento -->
-          <div class="flex gap-2 flex-wrap">
-            <button onclick="filterDept('all')" class="dept-btn btn-mondraker px-4 py-2.5 text-white rounded-lg text-[10px]">
-              ALL
-            </button>
-            <button onclick="filterDept('Producto')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              PRODUCT
-            </button>
-            <button onclick="filterDept('RRHH')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              HR
-            </button>
-            <button onclick="filterDept('FINANCE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              FINANCE
-            </button>
-            <button onclick="filterDept('MARKETING')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              MARKETING
-            </button>
-            <button onclick="filterDept('OPERATIONS')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              OPERATIONS
-            </button>
-            <button onclick="filterDept('WAREHOUSE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              WAREHOUSE
-            </button>
-            <button onclick="filterDept('PRODUCTION')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              PRODUCTION
-            </button>
-            <button onclick="filterDept('IT')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              IT
-            </button>
-            <button onclick="filterDept('SALES')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              SALES
-            </button>
-            <button onclick="filterDept('CUSTOMER SERVICE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              CUSTOMER SERVICE
-            </button>
-          </div>
-          
-          <!-- Controles de Navegación -->
+          <!-- Filtros -->
           <div class="flex gap-2">
-            <button onclick="resetZoom()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              🏠 START
-            </button>
-            <button onclick="zoomIn()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              ➕
-            </button>
-            <button onclick="zoomOut()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
-              ➖
+            <select id="departmentFilter" class="search-input px-4 py-3 rounded-lg text-sm font-semibold cursor-pointer" onchange="applyFilters()">
+              <option value="">ALL DEPARTMENTS</option>
+            </select>
+            
+            <select id="typeFilter" class="search-input px-4 py-3 rounded-lg text-sm font-semibold cursor-pointer" onchange="applyFilters()">
+              <option value="">ALL TYPES</option>
+              <option value="INTERNAL">INTERNAL</option>
+              <option value="EXTERNAL">EXTERNAL</option>
+            </select>
+            
+            <button onclick="resetFilters()" class="btn-secondary px-5 py-3 rounded-lg text-xs">
+              ↺ RESET
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Contenedor del Organigrama -->
-    <div id="chart-container" class="w-full h-full pt-36"></div>
+    <!-- Área del organigrama -->
+    <div id="chart" class="w-full h-full"></div>
 
-    <!-- Modal de Detalles -->
-    <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModal(event)">
-      <div class="bg-white border-2 border-gray-200 rounded-2xl shadow-2xl max-w-lg w-full p-8 fade-in" onclick="event.stopPropagation()">
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <h2 id="modalName" class="text-3xl font-bold text-black mb-1"></h2>
-            <div class="h-1 w-16 bg-gradient-to-r from-blue-500 to-transparent"></div>
+    <!-- Modal de detalles del empleado -->
+    <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModal()">
+      <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 fade-in border-2 border-gray-200" onclick="event.stopPropagation()">
+        <div class="flex items-start justify-between mb-6">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <div id="modalAvatar" class="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold" style="background: linear-gradient(135deg, #0071B9 0%, #005a94 100%);"></div>
+              <div>
+                <h2 id="modalName" class="text-3xl font-bold text-black mb-1"></h2>
+                <p id="modalPosition" class="text-lg text-gray-600 font-medium"></p>
+              </div>
+            </div>
           </div>
-          <button onclick="closeModal()" class="text-gray-400 hover:text-black text-3xl transition">&times;</button>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none transition-colors">&times;</button>
         </div>
         
-        <div class="space-y-4">
-          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Role</p>
-            <p id="modalRole" class="text-lg font-bold text-black"></p>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs text-gray-500 font-bold uppercase mb-2">Department</p>
+              <p id="modalDepartment" class="text-base text-black font-semibold"></p>
+            </div>
+            
+            <div>
+              <p class="text-xs text-gray-500 font-bold uppercase mb-2">Type</p>
+              <p id="modalType" class="text-base font-semibold"></p>
+            </div>
           </div>
           
-          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Department</p>
-            <p id="modalDept" class="text-lg font-bold text-blue-600"></p>
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs text-gray-500 font-bold uppercase mb-2">Reports To</p>
+              <p id="modalManager" class="text-base text-black font-semibold"></p>
+            </div>
+            
+            <div>
+              <p class="text-xs text-gray-500 font-bold uppercase mb-2">Level</p>
+              <p id="modalLevel" class="text-base text-black font-semibold"></p>
+            </div>
           </div>
-          
-          <div id="modalEmailSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Email</p>
-            <a id="modalEmail" href="#" class="text-base font-semibold text-blue-600 hover:text-blue-700 transition"></a>
-          </div>
-          
-          <div id="modalPhoneSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Phone</p>
-            <p id="modalPhone" class="text-base font-semibold text-black"></p>
-          </div>
-          
-          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Direct Reports</p>
-            <p id="modalReports" class="text-lg font-bold text-black"></p>
-          </div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t-2 border-gray-100">
+          <button onclick="closeModal()" class="btn-mondraker w-full py-4 rounded-xl text-sm">
+            CLOSE
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Sistema de carga con múltiples CDNs de respaldo -->
-    <script>
-      (function() {
-        let scriptsLoaded = {
-          d3: false,
-          html2canvas: false,
-          jspdf: false
-        };
-        
-        let loadAttempts = {
-          d3: 0,
-          html2canvas: 0,
-          jspdf: 0
-        };
-        
-        // CDNs alternativos para cada librería
-        const cdnOptions = {
-          d3: [
-            'https://d3js.org/d3.v7.min.js',
-            'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
-            'https://unpkg.com/d3@7/dist/d3.min.js'
-          ],
-          html2canvas: [
-            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-            'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
-            'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
-          ],
-          jspdf: [
-            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-            'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
-            'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
-          ]
-        };
-        
-        function checkAllLoaded() {
-          return scriptsLoaded.d3 && scriptsLoaded.html2canvas && scriptsLoaded.jspdf;
-        }
-        
-        function tryInitialize() {
-          if (checkAllLoaded() && typeof initializeApp === 'function') {
-            console.log('✅ All libraries loaded successfully!');
-            initializeApp();
-          }
-        }
-        
-        function loadScriptWithFallback(name, urls, index = 0) {
-          if (index >= urls.length) {
-            console.error(`❌ Failed to load ${name} from all CDNs`);
-            if (name === 'd3') {
-              document.getElementById('employeeCount').innerHTML = 
-                '<span class="text-red-500">⚠️ Error: Cannot load D3 library. Check your internet connection or firewall settings.</span>';
-            }
-            return;
-          }
-          
-          const url = urls[index];
-          console.log(`⏳ Loading ${name} from CDN ${index + 1}/${urls.length}: ${url.split('/')[2]}`);
-          
-          const script = document.createElement('script');
-          script.src = url;
-          
-          script.onload = function() {
-            console.log(`✅ ${name} loaded from ${url.split('/')[2]}`);
-            scriptsLoaded[name] = true;
-            loadAttempts[name] = index + 1;
-            tryInitialize();
-          };
-          
-          script.onerror = function() {
-            console.warn(`⚠️ Failed to load ${name} from ${url.split('/')[2]}, trying next CDN...`);
-            loadAttempts[name]++;
-            // Intentar con el siguiente CDN
-            setTimeout(() => loadScriptWithFallback(name, urls, index + 1), 500);
-          };
-          
-          document.body.appendChild(script);
-        }
-        
-        // Iniciar carga de todas las librerías
-        loadScriptWithFallback('d3', cdnOptions.d3);
-        loadScriptWithFallback('html2canvas', cdnOptions.html2canvas);
-        loadScriptWithFallback('jspdf', cdnOptions.jspdf);
-        
-        // Timeout de seguridad (30 segundos)
-        setTimeout(function() {
-          if (!checkAllLoaded()) {
-            console.error('❌ Timeout: Not all libraries loaded after 30 seconds');
-            console.log('Status:', scriptsLoaded);
-            if (!scriptsLoaded.d3) {
-              document.getElementById('employeeCount').innerHTML = 
-                '<span class="text-red-500">⚠️ Error: Network timeout. Please check your connection and reload the page.</span>';
-            }
-          }
-        }, 30000);
-      })();
-    </script>
+    <!-- Librerías -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
-      // ============================================
-      // CONFIGURACIÓN
-      // ============================================
-      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywyIp6chrjmy30T7Dj8wTp9biDw_W1c3NXuRUeRo18rluWWRyH2asrIktjGBr7NISs/exec';
-
-      // Variables globales
-      let allData = [];
-      let currentFilter = 'all';
-      let svg, g, zoom, root, tree;
+      // ========================================
+      // CONFIGURACIÓN DE SEGURIDAD
+      // ========================================
+      const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwluHjYaB_ntmayqXUoohD-sO4bWn91piuZSWENpuqF3ozI7FE4xbRtGngclN4vK9Ld/exec';
+      const SECRET_TOKEN = 'Mondraker2024_TuTokenSecreto_XYZ789';
       
-      const CARD_WIDTH = 275;
-      const CARD_HEIGHT = 90;
-      const SPACING_V = 120;
-      const SPACING_H = 340;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      // ========================================
+      // CONSTANTES Y VARIABLES GLOBALES
+      // ========================================
+      const CARD_WIDTH = 240;
+      const CARD_HEIGHT = 120;
+      const LEVEL_HEIGHT = 200;
+      const SIBLING_MARGIN = 20;
+      
+      let svg, g, zoom;
+      let allEmployees = [];
+      let hierarchyData = null;
+      let currentFilters = {
+        department: '',
+        type: '',
+        search: ''
+      };
 
-      // Función para convertir datos planos a jerarquía usando IDs
-      function buildHierarchy(flatData) {
-        const map = {};
-        const roots = [];
-        
-        // Crear mapa con IDs como clave
-        flatData.forEach(person => {
-          map[person.id] = {
-            id: person.id,
-            name: person.name,
-            role: person.role,
-            department: person.department,
-            email: person.email || '',
-            phone: person.phone || '',
-            children: []
-          };
-        });
-        
-        // Construir jerarquía usando manager_id
-        flatData.forEach(person => {
-          if (person.manager_id && map[person.manager_id]) {
-            map[person.manager_id].children.push(map[person.id]);
-          } else {
-            roots.push(map[person.id]);
-          }
-        });
-        
-        return roots.length === 1 ? roots[0] : { 
-          id: "root", 
-          name: "Organization", 
-          role: "", 
-          department: "", 
-          children: roots 
-        };
-      }
-
-      // Cargar datos desde Apps Script
+      // ========================================
+      // FUNCIÓN PRINCIPAL: CARGAR DATOS
+      // ========================================
       async function loadData() {
         try {
-          console.log('🔄 Loading data from Google Sheets...');
-          const response = await fetch(APPS_SCRIPT_URL);
+          console.log('🔒 Loading data securely from Google Apps Script...');
+          
+          // Construir URL con token de seguridad
+          const urlWithToken = `${SCRIPT_URL}?token=${encodeURIComponent(SECRET_TOKEN)}`;
+          
+          // Hacer la petición segura
+          const response = await fetch(urlWithToken);
           
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           
           const data = await response.json();
-          console.log('✅ Data received:', data);
           
+          // Verificar si hay error de autenticación
           if (data.error) {
             throw new Error(data.error);
           }
           
-          // Validar que los datos tienen IDs
-          const missingIds = data.filter(person => !person.id);
-          if (missingIds.length > 0) {
-            console.warn('⚠️ Warning: Some employees are missing IDs:', missingIds);
-          }
+          console.log('✅ Secure data loaded successfully:', data.length, 'employees');
           
-          allData = data;
-          initializeChart();
+          allEmployees = data;
+          processData(data);
+          
         } catch (error) {
           console.error('❌ Error loading data:', error);
           document.getElementById('employeeCount').innerHTML = 
-            '<span class="text-red-500">⚠️ Error: ' + error.message + '</span>';
+            '<span class="text-red-500">⚠️ Error loading data. Please check your connection.</span>';
         }
       }
 
-      // Inicializar el organigrama
-      function initializeChart() {
-        console.log('📊 Initializing chart with', allData.length, 'employees');
+      // ========================================
+      // PROCESAR Y PREPARAR DATOS
+      // ========================================
+      function processData(data) {
+        console.log('📊 Processing employee data...');
         
+        // Crear mapa de empleados por ID
+        const employeeMap = {};
+        data.forEach(emp => {
+          employeeMap[emp.id] = {
+            ...emp,
+            children: []
+          };
+        });
+        
+        // Construir jerarquía
+        let root = null;
+        data.forEach(emp => {
+          if (emp.manager_id && employeeMap[emp.manager_id]) {
+            employeeMap[emp.manager_id].children.push(employeeMap[emp.id]);
+          } else {
+            root = employeeMap[emp.id];
+          }
+        });
+        
+        hierarchyData = d3.hierarchy(root);
+        
+        // Poblar filtros
+        populateFilters(data);
+        
+        // Actualizar contador
         document.getElementById('employeeCount').innerHTML = 
-          `<span class="text-black font-bold">${allData.length}</span> <span class="text-gray-500">employees</span>`;
+          `<strong>${data.length}</strong> employees`;
         
-        svg = d3.select("#chart-container").append("svg")
-          .attr("viewBox", [-width / 2, -height / 2, width, height])
-          .style("width", "100%")
-          .style("height", "100%");
+        // Renderizar organigrama
+        renderChart(hierarchyData);
+      }
 
-        g = svg.append("g");
+      // ========================================
+      // POBLAR FILTROS DINÁMICOS
+      // ========================================
+      function populateFilters(data) {
+        const departments = [...new Set(data.map(e => e.department))].sort();
+        const deptSelect = document.getElementById('departmentFilter');
+        
+        departments.forEach(dept => {
+          const option = document.createElement('option');
+          option.value = dept;
+          option.textContent = dept.toUpperCase();
+          deptSelect.appendChild(option);
+        });
+      }
+
+      // ========================================
+      // RENDERIZAR ORGANIGRAMA
+      // ========================================
+      function renderChart(root) {
+        console.log('🎨 Rendering organizational chart...');
+        
+        const container = document.getElementById('chart');
+        container.innerHTML = '';
+        
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        svg = d3.select('#chart')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
+          .style('background', '#ffffff');
         
         zoom = d3.zoom()
-          .scaleExtent([0.1, 4])
-          .on("zoom", (e) => g.attr("transform", e.transform));
+          .scaleExtent([0.1, 3])
+          .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+          });
         
         svg.call(zoom);
         
-        renderChart(allData);
-        resetZoom();
+        g = svg.append('g');
+        
+        // Calcular posiciones
+        const treeLayout = d3.tree()
+          .nodeSize([CARD_WIDTH + SIBLING_MARGIN, LEVEL_HEIGHT]);
+        
+        treeLayout(root);
+        
+        // Centrar vista inicial
+        const initialTransform = d3.zoomIdentity
+          .translate(width / 2, 100)
+          .scale(0.8);
+        
+        svg.call(zoom.transform, initialTransform);
+        
+        // Dibujar conexiones
+        drawConnections(root);
+        
+        // Dibujar nodos
+        drawNodes(root);
       }
 
-      // Renderizar organigrama
-      function renderChart(data) {
-        g.selectAll("*").remove();
+      // ========================================
+      // DIBUJAR CONEXIONES
+      // ========================================
+      function drawConnections(root) {
+        const links = root.links();
         
-        const hierarchyData = buildHierarchy(data);
-        root = d3.hierarchy(hierarchyData);
-        tree = d3.tree().nodeSize([SPACING_V, SPACING_H]);
-        tree(root);
+        g.selectAll('.link')
+          .data(links)
+          .enter()
+          .append('path')
+          .attr('class', 'link')
+          .attr('d', d => {
+            return `M${d.source.x},${d.source.y + CARD_HEIGHT/2}
+                    L${d.source.x},${d.source.y + LEVEL_HEIGHT/2}
+                    L${d.target.x},${d.source.y + LEVEL_HEIGHT/2}
+                    L${d.target.x},${d.target.y - CARD_HEIGHT/2}`;
+          })
+          .attr('fill', 'none')
+          .attr('stroke', '#e2e3e4')
+          .attr('stroke-width', 2);
+      }
 
-        // Links (conexiones)
-        g.append("g")
-          .attr("fill", "none")
-          .attr("stroke", "#0071B9")
-          .attr("stroke-opacity", 0.4)
-          .attr("stroke-width", 2)
-          .selectAll("path")
-          .data(root.links())
-          .join("path")
-          .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
-
-        // Nodos
-        const node = g.append("g")
-          .selectAll("g")
-          .data(root.descendants())
-          .join("g")
-          .attr("transform", d => `translate(${d.y},${d.x})`)
-          .attr("class", "node-group");
-
-        // Tarjeta principal
-        node.append("rect")
-          .attr("width", CARD_WIDTH)
-          .attr("height", CARD_HEIGHT)
-          .attr("x", 0)
-          .attr("y", -CARD_HEIGHT / 2)
-          .attr("rx", 8)
-          .attr("fill", "#ffffff")
-          .attr("stroke", "#e2e3e4")
-          .attr("stroke-width", 2)
-          .attr("class", "node-card")
-          .on("click", (event, d) => showModal(d.data));
-
-        // Barra superior con color por departamento
-        const departmentColors = {
-          'Producto': '#0071B9',      // Azul Mondraker (Product)
-          'RRHH': '#10b981',          // Verde esmeralda (HR)
-          'FINANCE': '#f59e0b',       // Ámbar/Naranja (Finance)
-          'MARKETING': '#ec4899',     // Rosa/Magenta (Marketing)
-          'OPERATIONS': '#8b5cf6',    // Púrpura (Operations)
-          'WAREHOUSE': '#06b6d4',     // Cyan (Warehouse)
-          'PRODUCTION': '#ef4444',    // Rojo (Production)
-          'IT': '#6366f1',            // Índigo (IT)
-          'SALES': '#14b8a6',         // Teal (Sales)
-          'CUSTOMER SERVICE': '#f97316' // Naranja brillante (Customer Service)
-        };
+      // ========================================
+      // DIBUJAR NODOS (TARJETAS DE EMPLEADOS)
+      // ========================================
+      function drawNodes(root) {
+        const nodes = root.descendants();
         
-        node.append("rect")
-          .attr("width", CARD_WIDTH)
-          .attr("height", 6)
-          .attr("x", 0)
-          .attr("y", -CARD_HEIGHT / 2)
-          .attr("rx", 8)
-          .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
-
-        // Nombre
-        node.append("text")
-          .attr("dy", -12)
-          .attr("x", 16)
-          .text(d => d.data.name)
-          .attr("class", "font-bold text-sm")
-          .attr("fill", "#000000");
-
-        // Puesto (con wrap)
-        node.each(function(d) {
-          const el = d3.select(this);
-          const roleText = el.append("text")
-            .attr("x", 16)
-            .attr("y", 8)
-            .attr("class", "text-[11px] font-medium uppercase tracking-wide")
-            .attr("fill", "#666");
-
-          const words = d.data.role.split(/\s+/).reverse();
-          let line = [];
-          const lineHeight = 1.3;
-          const maxWidth = CARD_WIDTH - 32;
-          let tspan = roleText.append("tspan").attr("x", 16).attr("dy", "0em");
-          
-          let word;
-          while ((word = words.pop())) {
-            line.push(word);
-            tspan.text(line.join(" "));
-            if (tspan.node().getComputedTextLength() > maxWidth) {
-              line.pop();
-              tspan.text(line.join(" "));
-              line = [word];
-              tspan = roleText.append("tspan").attr("x", 16).attr("dy", lineHeight + "em").text(word);
-            }
-          }
-        });
-
-        // Departamento con color correspondiente
-        node.filter(d => d.data.department).append("text")
-          .attr("y", (CARD_HEIGHT / 2) - 14)
-          .attr("x", 16)
-          .text(d => d.data.department.toUpperCase())
-          .attr("class", "text-[10px] font-bold tracking-wider")
-          .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
-
-        // Indicador de reportes directos
-        node.filter(d => d.children && d.children.length > 0).append("g")
-          .attr("transform", `translate(${CARD_WIDTH - 30}, 0)`)
-          .call(g => {
-            g.append("circle")
-              .attr("r", 14)
-              .attr("fill", "#0071B9")
-              .attr("stroke", "#ffffff")
-              .attr("stroke-width", 2);
-            g.append("text")
-              .attr("text-anchor", "middle")
-              .attr("dy", "0.35em")
-              .attr("class", "text-xs font-bold")
-              .attr("fill", "#ffffff")
-              .text(d => d.children.length);
+        const nodeGroups = g.selectAll('.node')
+          .data(nodes)
+          .enter()
+          .append('g')
+          .attr('class', 'node')
+          .attr('transform', d => `translate(${d.x},${d.y})`)
+          .on('click', (event, d) => showModal(d.data));
+        
+        // Tarjeta de fondo
+        nodeGroups.append('rect')
+          .attr('class', 'node-card')
+          .attr('x', -CARD_WIDTH/2)
+          .attr('y', -CARD_HEIGHT/2)
+          .attr('width', CARD_WIDTH)
+          .attr('height', CARD_HEIGHT)
+          .attr('rx', 12)
+          .attr('fill', '#ffffff')
+          .attr('stroke', '#e2e3e4')
+          .attr('stroke-width', 2);
+        
+        // Barra superior de color
+        nodeGroups.append('rect')
+          .attr('x', -CARD_WIDTH/2)
+          .attr('y', -CARD_HEIGHT/2)
+          .attr('width', CARD_WIDTH)
+          .attr('height', 8)
+          .attr('rx', 12)
+          .attr('fill', d => d.data.type === 'INTERNAL' ? '#0071B9' : '#e2e3e4');
+        
+        // Avatar circular
+        nodeGroups.append('circle')
+          .attr('cx', 0)
+          .attr('cy', -CARD_HEIGHT/2 + 35)
+          .attr('r', 22)
+          .attr('fill', d => d.data.type === 'INTERNAL' ? '#0071B9' : '#999999');
+        
+        // Iniciales en avatar
+        nodeGroups.append('text')
+          .attr('x', 0)
+          .attr('y', -CARD_HEIGHT/2 + 40)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#ffffff')
+          .attr('font-size', '14px')
+          .attr('font-weight', '700')
+          .text(d => {
+            const names = d.data.name.split(' ');
+            return names.length > 1 
+              ? names[0][0] + names[1][0] 
+              : names[0][0];
           });
+        
+        // Nombre
+        nodeGroups.append('text')
+          .attr('x', 0)
+          .attr('y', -CARD_HEIGHT/2 + 68)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#000000')
+          .attr('font-size', '13px')
+          .attr('font-weight', '700')
+          .text(d => {
+            const name = d.data.name;
+            return name.length > 20 ? name.substring(0, 20) + '...' : name;
+          });
+        
+        // Posición
+        nodeGroups.append('text')
+          .attr('x', 0)
+          .attr('y', -CARD_HEIGHT/2 + 88)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#666666')
+          .attr('font-size', '11px')
+          .attr('font-weight', '500')
+          .text(d => {
+            const position = d.data.position;
+            return position.length > 24 ? position.substring(0, 24) + '...' : position;
+          });
+        
+        // Departamento
+        nodeGroups.append('text')
+          .attr('x', 0)
+          .attr('y', -CARD_HEIGHT/2 + 103)
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#999999')
+          .attr('font-size', '10px')
+          .attr('font-weight', '600')
+          .text(d => d.data.department.toUpperCase());
       }
 
-      // Búsqueda
-      document.getElementById('searchInput').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
+      // ========================================
+      // MODAL DE DETALLES
+      // ========================================
+      function showModal(employee) {
+        document.getElementById('modalAvatar').textContent = 
+          employee.name.split(' ').map(n => n[0]).join('');
+        document.getElementById('modalName').textContent = employee.name;
+        document.getElementById('modalPosition').textContent = employee.position;
+        document.getElementById('modalDepartment').textContent = employee.department;
+        document.getElementById('modalType').textContent = employee.type;
+        document.getElementById('modalType').className = 
+          employee.type === 'INTERNAL' ? 'text-base font-semibold text-blue-600' : 'text-base font-semibold text-gray-600';
         
-        d3.selectAll('.node-card').classed('highlighted', false);
+        const manager = allEmployees.find(e => e.id === employee.manager_id);
+        document.getElementById('modalManager').textContent = 
+          manager ? manager.name : 'CEO';
         
-        if (searchTerm === '') return;
-        
-        d3.selectAll('.node-group').each(function(d) {
-          const matches = 
-            d.data.name.toLowerCase().includes(searchTerm) ||
-            d.data.role.toLowerCase().includes(searchTerm) ||
-            (d.data.department && d.data.department.toLowerCase().includes(searchTerm));
-          
-          if (matches) {
-            d3.select(this).select('.node-card').classed('highlighted', true);
-          }
-        });
-      });
-
-      // Filtro por departamento
-      function filterDept(dept) {
-        currentFilter = dept;
-        
-        document.querySelectorAll('.dept-btn').forEach(btn => {
-          btn.classList.remove('btn-mondraker');
-          btn.classList.add('btn-secondary');
-        });
-        event.target.classList.remove('btn-secondary');
-        event.target.classList.add('btn-mondraker');
-        
-        const filtered = dept === 'all' 
-          ? allData 
-          : allData.filter(p => p.department === dept);
-        
-        document.getElementById('employeeCount').innerHTML = 
-          `<span class="text-black font-bold">${filtered.length}</span> <span class="text-gray-500">of ${allData.length} employees</span>`;
-        
-        renderChart(filtered);
-      }
-
-      // Modal de detalles
-      function showModal(data) {
-        // Paleta de colores por departamento (igual que en las tarjetas)
-        const departmentColors = {
-          'Producto': '#0071B9',
-          'RRHH': '#10b981',
-          'FINANCE': '#f59e0b',
-          'MARKETING': '#ec4899',
-          'OPERATIONS': '#8b5cf6',
-          'WAREHOUSE': '#06b6d4',
-          'PRODUCTION': '#ef4444',
-          'IT': '#6366f1',
-          'SALES': '#14b8a6',
-          'CUSTOMER SERVICE': '#f97316'
-        };
-        
-        document.getElementById('modalName').textContent = data.name;
-        document.getElementById('modalRole').textContent = data.role;
-        
-        const deptElement = document.getElementById('modalDept');
-        deptElement.textContent = data.department || 'N/A';
-        // Aplicar color correspondiente al departamento
-        deptElement.style.color = departmentColors[data.department] || '#0071B9';
-        
-        if (data.email) {
-          document.getElementById('modalEmailSection').classList.remove('hidden');
-          document.getElementById('modalEmail').textContent = data.email;
-          document.getElementById('modalEmail').href = `mailto:${data.email}`;
-        } else {
-          document.getElementById('modalEmailSection').classList.add('hidden');
-        }
-        
-        if (data.phone) {
-          document.getElementById('modalPhoneSection').classList.remove('hidden');
-          document.getElementById('modalPhone').textContent = data.phone;
-        } else {
-          document.getElementById('modalPhoneSection').classList.add('hidden');
-        }
-        
-        const reports = data.children ? data.children.length : 0;
-        document.getElementById('modalReports').textContent = reports === 0 ? 'None' : reports;
-        
+        document.getElementById('modalLevel').textContent = `Level ${employee.level}`;
         document.getElementById('modal').classList.remove('hidden');
       }
 
-      function closeModal(event) {
-        if (!event || event.target.id === 'modal') {
-          document.getElementById('modal').classList.add('hidden');
-        }
+      function closeModal() {
+        document.getElementById('modal').classList.add('hidden');
       }
 
-      // Controles de zoom
-      function resetZoom() {
-        // El nodo raíz (CEO) está en (0, 0) en coordenadas del SVG
-        // El viewBox [-width/2, -height/2, width, height] ya centra el origen en la pantalla
-        // Solo necesitamos aplicar un scale sin translate adicional
+      // ========================================
+      // BÚSQUEDA Y FILTROS
+      // ========================================
+      function searchEmployee(query) {
+        currentFilters.search = query.toLowerCase();
+        applyFilters();
+      }
+
+      function applyFilters() {
+        currentFilters.department = document.getElementById('departmentFilter').value;
+        currentFilters.type = document.getElementById('typeFilter').value;
         
-        const scale = 0.7;
+        const filtered = allEmployees.filter(emp => {
+          const matchDept = !currentFilters.department || emp.department === currentFilters.department;
+          const matchType = !currentFilters.type || emp.type === currentFilters.type;
+          const matchSearch = !currentFilters.search || 
+            emp.name.toLowerCase().includes(currentFilters.search) ||
+            emp.position.toLowerCase().includes(currentFilters.search) ||
+            emp.department.toLowerCase().includes(currentFilters.search);
+          
+          return matchDept && matchType && matchSearch;
+        });
         
-        svg.transition()
-          .duration(750)
-          .call(
-            zoom.transform,
-            d3.zoomIdentity.scale(scale)
-          );
+        // Destacar nodos filtrados
+        g.selectAll('.node')
+          .style('opacity', d => {
+            const emp = d.data;
+            const isMatch = filtered.some(f => f.id === emp.id);
+            return isMatch ? 1 : 0.2;
+          });
+        
+        g.selectAll('.link')
+          .style('opacity', d => {
+            const sourceMatch = filtered.some(f => f.id === d.source.data.id);
+            const targetMatch = filtered.some(f => f.id === d.target.data.id);
+            return sourceMatch && targetMatch ? 1 : 0.1;
+          });
       }
 
-      function zoomIn() {
-        svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+      function resetFilters() {
+        document.getElementById('departmentFilter').value = '';
+        document.getElementById('typeFilter').value = '';
+        document.getElementById('searchInput').value = '';
+        currentFilters = { department: '', type: '', search: '' };
+        
+        g.selectAll('.node').style('opacity', 1);
+        g.selectAll('.link').style('opacity', 1);
       }
 
-      function zoomOut() {
-        svg.transition().duration(300).call(zoom.scaleBy, 0.7);
-      }
-
-      // ============================================
-      // FUNCIONES DE EXPORTACIÓN
-      // ============================================
-      
-      // Toggle dropdown del menú de exportación
+      // ========================================
+      // EXPORTACIÓN
+      // ========================================
       function toggleDropdown(event) {
         event.stopPropagation();
-        const dropdown = document.getElementById('exportDropdown');
-        dropdown.classList.toggle('show');
+        document.getElementById('exportDropdown').classList.toggle('show');
       }
 
-      // Cerrar dropdown si se hace click fuera
       window.onclick = function(event) {
-        if (!event.target.matches('.btn-export') && !event.target.closest('.btn-export')) {
-          const dropdowns = document.getElementsByClassName("dropdown-content");
+        if (!event.target.matches('.btn-export') && !event.target.matches('.btn-export *')) {
+          const dropdowns = document.getElementsByClassName('dropdown-content');
           for (let i = 0; i < dropdowns.length; i++) {
-            const openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-              openDropdown.classList.remove('show');
-            }
+            dropdowns[i].classList.remove('show');
           }
         }
       }
-      
+
       async function exportToPNG() {
         try {
-          // Cerrar el dropdown
           document.getElementById('exportDropdown').classList.remove('show');
-          
           document.getElementById('exportingOverlay').classList.remove('hidden');
           
           await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Obtener todos los elementos g visibles (no display:none)
           const visibleNodes = g.selectAll('g').filter(function() {
             return this.style.display !== 'none';
           });
           
-          // Calcular bounding box solo de nodos visibles
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           
           visibleNodes.each(function() {
@@ -833,7 +708,6 @@
             maxY = Math.max(maxY, y + CARD_HEIGHT/2);
           });
           
-          // Añadir margen
           const margin = 100;
           minX -= margin;
           minY -= margin;
@@ -843,7 +717,6 @@
           const exportWidth = maxX - minX;
           const exportHeight = maxY - minY;
           
-          // Crear un contenedor temporal para exportación
           const tempContainer = document.createElement('div');
           tempContainer.style.position = 'absolute';
           tempContainer.style.left = '-9999px';
@@ -852,14 +725,12 @@
           tempContainer.style.backgroundColor = '#ffffff';
           document.body.appendChild(tempContainer);
           
-          // Crear SVG temporal con viewBox ajustado al contenido visible
           const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           tempSvg.setAttribute('width', '1920');
           tempSvg.setAttribute('height', '1080');
           tempSvg.setAttribute('viewBox', `${minX} ${minY} ${exportWidth} ${exportHeight}`);
           tempSvg.style.backgroundColor = '#ffffff';
           
-          // Copiar los estilos necesarios
           const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
           styleElement.textContent = `
             text { font-family: 'Inter', sans-serif; }
@@ -867,7 +738,6 @@
           `;
           tempSvg.appendChild(styleElement);
           
-          // Clonar el grupo g con todo el contenido
           const clonedG = g.node().cloneNode(true);
           tempSvg.appendChild(clonedG);
           
@@ -875,7 +745,6 @@
           
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Capturar el contenedor temporal
           const canvas = await html2canvas(tempContainer, {
             backgroundColor: '#ffffff',
             scale: 2,
@@ -884,10 +753,8 @@
             height: 1080
           });
           
-          // Limpiar
           document.body.removeChild(tempContainer);
           
-          // Descargar imagen
           const link = document.createElement('a');
           const timestamp = new Date().toISOString().split('T')[0];
           link.download = `Mondraker_Organizational_Chart_${timestamp}.png`;
@@ -904,19 +771,15 @@
 
       async function exportToPDF() {
         try {
-          // Cerrar el dropdown
           document.getElementById('exportDropdown').classList.remove('show');
-          
           document.getElementById('exportingOverlay').classList.remove('hidden');
           
           await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Obtener todos los elementos g visibles (no display:none)
           const visibleNodes = g.selectAll('g').filter(function() {
             return this.style.display !== 'none';
           });
           
-          // Calcular bounding box solo de nodos visibles
           let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
           
           visibleNodes.each(function() {
@@ -938,7 +801,6 @@
             maxY = Math.max(maxY, y + CARD_HEIGHT/2);
           });
           
-          // Añadir margen
           const margin = 100;
           minX -= margin;
           minY -= margin;
@@ -948,7 +810,6 @@
           const exportWidth = maxX - minX;
           const exportHeight = maxY - minY;
           
-          // Crear un contenedor temporal para exportación
           const tempContainer = document.createElement('div');
           tempContainer.style.position = 'absolute';
           tempContainer.style.left = '-9999px';
@@ -957,14 +818,12 @@
           tempContainer.style.backgroundColor = '#ffffff';
           document.body.appendChild(tempContainer);
           
-          // Crear SVG temporal con viewBox ajustado al contenido visible
           const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           tempSvg.setAttribute('width', '1920');
           tempSvg.setAttribute('height', '1080');
           tempSvg.setAttribute('viewBox', `${minX} ${minY} ${exportWidth} ${exportHeight}`);
           tempSvg.style.backgroundColor = '#ffffff';
           
-          // Copiar los estilos necesarios
           const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
           styleElement.textContent = `
             text { font-family: 'Inter', sans-serif; }
@@ -972,7 +831,6 @@
           `;
           tempSvg.appendChild(styleElement);
           
-          // Clonar el grupo g con todo el contenido
           const clonedG = g.node().cloneNode(true);
           tempSvg.appendChild(clonedG);
           
@@ -980,7 +838,6 @@
           
           await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Capturar el contenedor temporal
           const canvas = await html2canvas(tempContainer, {
             backgroundColor: '#ffffff',
             scale: 2,
@@ -989,17 +846,14 @@
             height: 1080
           });
           
-          // Limpiar
           document.body.removeChild(tempContainer);
           
           const imgData = canvas.toDataURL('image/png');
           const { jsPDF } = window.jspdf;
           
-          // Determinar orientación según el aspect ratio
           const aspectRatio = exportWidth / exportHeight;
           const orientation = aspectRatio > 1.3 ? 'landscape' : 'portrait';
           
-          // Crear PDF
           const pdf = new jsPDF({
             orientation: orientation,
             unit: 'mm',
@@ -1009,17 +863,14 @@
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
           
-          // Calcular dimensiones manteniendo aspect ratio
-          let imgWidth = pdfWidth - 20; // margen de 10mm a cada lado
+          let imgWidth = pdfWidth - 20;
           let imgHeight = (canvas.height / canvas.width) * imgWidth;
           
-          // Si la altura es mayor que la página, ajustar por altura
           if (imgHeight > pdfHeight - 20) {
             imgHeight = pdfHeight - 20;
             imgWidth = (canvas.width / canvas.height) * imgHeight;
           }
           
-          // Centrar en la página
           const x = (pdfWidth - imgWidth) / 2;
           const y = (pdfHeight - imgHeight) / 2;
           
@@ -1040,11 +891,12 @@
         if (e.key === 'Escape') closeModal();
       });
 
-      // Función de inicialización de la aplicación
+      // ========================================
+      // INICIALIZACIÓN
+      // ========================================
       function initializeApp() {
-        console.log('🚀 Starting Mondraker Organizational Chart...');
+        console.log('🚀 Starting Mondraker Organizational Chart (Secure Mode)...');
         
-        // Verificación final de librerías
         if (typeof d3 === 'undefined') {
           console.error('❌ D3 is not available');
           document.getElementById('employeeCount').innerHTML = 
@@ -1060,11 +912,9 @@
           console.warn('⚠️ jsPDF not available - Export to PDF will not work');
         }
         
-        // Iniciar carga de datos
         loadData();
       }
 
-      // Fallback: Si las librerías ya estaban cargadas cuando llegamos aquí
       if (typeof d3 !== 'undefined' && typeof html2canvas !== 'undefined' && typeof window.jspdf !== 'undefined') {
         console.log('✅ Libraries already loaded, initializing immediately');
         initializeApp();
