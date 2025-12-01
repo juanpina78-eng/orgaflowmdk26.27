@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organigrama Mondraker</title>
+    <title>Mondraker Organizational Chart</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
       
       body { 
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        background: #000000;
+        background: #ffffff;
         overflow: hidden; 
         margin: 0;
         padding: 0;
@@ -20,12 +19,12 @@
       .node-card { 
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
-        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
       }
       
       .node-card:hover { 
         transform: translateY(-4px) scale(1.02);
-        filter: drop-shadow(0 12px 24px rgba(0, 113, 185, 0.4));
+        filter: drop-shadow(0 8px 16px rgba(0, 113, 185, 0.3));
       }
       
       .node-card.highlighted { 
@@ -42,9 +41,9 @@
       
       .search-input {
         transition: all 0.3s;
-        border: 2px solid #333;
-        background: #1a1a1a;
-        color: #ffffff;
+        border: 2px solid #e2e3e4;
+        background: #ffffff;
+        color: #000000;
       }
       
       .search-input:focus {
@@ -54,12 +53,12 @@
       }
       
       .search-input::placeholder {
-        color: #666;
+        color: #999;
       }
       
       #modal { 
         backdrop-filter: blur(10px);
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(255, 255, 255, 0.95);
       }
       
       .fade-in { 
@@ -86,32 +85,136 @@
       }
       
       .btn-secondary {
-        background: #333;
+        background: #e2e3e4;
+        color: #000000;
         transition: all 0.3s;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
       
       .btn-secondary:hover {
-        background: #444;
+        background: #d0d1d2;
+        transform: translateY(-1px);
+      }
+      
+      .btn-export {
+        background: #ffffff;
+        border: 2px solid #0071B9;
+        color: #0071B9;
+        transition: all 0.3s;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .btn-export:hover {
+        background: #0071B9;
+        color: #ffffff;
+        transform: translateY(-2px);
       }
       
       .logo-mondraker {
         font-weight: 800;
         letter-spacing: -0.5px;
+        color: #000000;
+      }
+      
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0, 113, 185, 0.3);
+        border-radius: 50%;
+        border-top-color: #0071B9;
+        animation: spin 1s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #ffffff;
+        min-width: 200px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+        z-index: 1;
+        border: 2px solid #e2e3e4;
+        border-radius: 8px;
+        margin-top: 8px;
+      }
+
+      .dropdown-content button {
+        color: #000000;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .dropdown-content button:hover {
+        background-color: #0071B9;
         color: #ffffff;
+      }
+
+      .dropdown-content.show {
+        display: block;
+      }
+
+      #exportingOverlay {
+        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.9);
       }
     </style>
 </head>
 <body class="w-screen h-screen">
+    <!-- Overlay de exportación -->
+    <div id="exportingOverlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
+      <div class="bg-white border-2 border-blue-500 rounded-2xl p-8 text-center shadow-2xl">
+        <div class="loading mx-auto mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <p class="text-black text-lg font-bold">Exporting chart...</p>
+        <p class="text-gray-600 text-sm mt-2">Please wait a moment</p>
+      </div>
+    </div>
+
     <!-- Panel de Control Superior -->
-    <div class="absolute top-0 left-0 right-0 z-50 bg-black border-b-2 border-gray-800 fade-in">
+    <div class="absolute top-0 left-0 right-0 z-50 bg-white border-b-2 border-gray-200 fade-in shadow-sm">
       <div class="max-w-7xl mx-auto px-6 py-4">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-4">
             <h1 class="logo-mondraker text-2xl">MONDRAKER</h1>
-            <span class="text-gray-500 text-sm font-light">Organigrama Corporativo</span>
+            <span class="text-gray-500 text-sm font-light">Organizational Chart</span>
           </div>
-          <div class="text-gray-400 text-sm">
-            <span id="employeeCount">Cargando...</span>
+          <div class="flex items-center gap-4">
+            <div class="text-gray-600 text-sm">
+              <span id="employeeCount"><span class="loading"></span> Loading data...</span>
+            </div>
+            
+            <!-- Botón de Exportar -->
+            <div class="dropdown">
+              <button onclick="toggleDropdown(event)" class="btn-export px-5 py-3 rounded-lg text-xs flex items-center gap-2">
+                📥 EXPORT
+                <span class="text-xs">▼</span>
+              </button>
+              <div id="exportDropdown" class="dropdown-content">
+                <button onclick="exportToPNG()">📷 Export as PNG</button>
+                <button onclick="exportToPDF()">📄 Export as PDF</button>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -121,33 +224,57 @@
             <input 
               type="text" 
               id="searchInput" 
-              placeholder="🔍 Buscar empleado por nombre, puesto o departamento..." 
+              placeholder="🔍 Search employee by name, role or department..." 
               class="search-input w-full px-4 py-3 rounded-lg text-sm font-medium"
             />
           </div>
           
           <!-- Filtros por Departamento -->
           <div class="flex gap-2 flex-wrap">
-            <button onclick="filterDept('all')" class="dept-btn btn-mondraker px-5 py-3 text-white rounded-lg text-xs">
-              TODOS
+            <button onclick="filterDept('all')" class="dept-btn btn-mondraker px-4 py-2.5 text-white rounded-lg text-[10px]">
+              ALL
             </button>
-            <button onclick="filterDept('Producto')" class="dept-btn btn-secondary px-5 py-3 text-white rounded-lg text-xs">
-              PRODUCTO
+            <button onclick="filterDept('Producto')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              PRODUCT
             </button>
-            <button onclick="filterDept('RRHH')" class="dept-btn btn-secondary px-5 py-3 text-white rounded-lg text-xs">
-              RRHH
+            <button onclick="filterDept('RRHH')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              HR
+            </button>
+            <button onclick="filterDept('FINANCE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              FINANCE
+            </button>
+            <button onclick="filterDept('MARKETING')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              MARKETING
+            </button>
+            <button onclick="filterDept('OPERATIONS')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              OPERATIONS
+            </button>
+            <button onclick="filterDept('WAREHOUSE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              WAREHOUSE
+            </button>
+            <button onclick="filterDept('PRODUCTION')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              PRODUCTION
+            </button>
+            <button onclick="filterDept('IT')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              IT
+            </button>
+            <button onclick="filterDept('SALES')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              SALES
+            </button>
+            <button onclick="filterDept('CUSTOMER SERVICE')" class="dept-btn btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              CUSTOMER SERVICE
             </button>
           </div>
           
           <!-- Controles de Navegación -->
           <div class="flex gap-2">
-            <button onclick="resetZoom()" class="btn-secondary px-4 py-3 text-white rounded-lg text-xs font-bold">
-              🏠 INICIO
+            <button onclick="resetZoom()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
+              🏠 START
             </button>
-            <button onclick="zoomIn()" class="btn-secondary px-4 py-3 text-white rounded-lg text-xs font-bold">
+            <button onclick="zoomIn()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
               ➕
             </button>
-            <button onclick="zoomOut()" class="btn-secondary px-4 py-3 text-white rounded-lg text-xs font-bold">
+            <button onclick="zoomOut()" class="btn-secondary px-4 py-2.5 text-white rounded-lg text-[10px]">
               ➖
             </button>
           </div>
@@ -160,93 +287,168 @@
 
     <!-- Modal de Detalles -->
     <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModal(event)">
-      <div class="bg-black border-2 border-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 fade-in" onclick="event.stopPropagation()">
+      <div class="bg-white border-2 border-gray-200 rounded-2xl shadow-2xl max-w-lg w-full p-8 fade-in" onclick="event.stopPropagation()">
         <div class="flex justify-between items-start mb-6">
           <div>
-            <h2 id="modalName" class="text-3xl font-bold text-white mb-1"></h2>
+            <h2 id="modalName" class="text-3xl font-bold text-black mb-1"></h2>
             <div class="h-1 w-16 bg-gradient-to-r from-blue-500 to-transparent"></div>
           </div>
-          <button onclick="closeModal()" class="text-gray-400 hover:text-white text-3xl transition">&times;</button>
+          <button onclick="closeModal()" class="text-gray-400 hover:text-black text-3xl transition">&times;</button>
         </div>
         
         <div class="space-y-4">
-          <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Puesto</p>
-            <p id="modalRole" class="text-lg font-bold text-white"></p>
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Role</p>
+            <p id="modalRole" class="text-lg font-bold text-black"></p>
           </div>
           
-          <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Departamento</p>
-            <p id="modalDept" class="text-lg font-bold text-blue-400"></p>
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Department</p>
+            <p id="modalDept" class="text-lg font-bold text-blue-600"></p>
           </div>
           
-          <div id="modalEmailSection" class="bg-gray-900 rounded-lg p-4 border border-gray-800 hidden">
+          <div id="modalEmailSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
             <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Email</p>
-            <a id="modalEmail" href="#" class="text-base font-semibold text-blue-400 hover:text-blue-300 transition"></a>
+            <a id="modalEmail" href="#" class="text-base font-semibold text-blue-600 hover:text-blue-700 transition"></a>
           </div>
           
-          <div id="modalPhoneSection" class="bg-gray-900 rounded-lg p-4 border border-gray-800 hidden">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Teléfono</p>
-            <p id="modalPhone" class="text-base font-semibold text-white"></p>
+          <div id="modalPhoneSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Phone</p>
+            <p id="modalPhone" class="text-base font-semibold text-black"></p>
           </div>
           
-          <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Reportes Directos</p>
-            <p id="modalReports" class="text-lg font-bold text-white"></p>
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Direct Reports</p>
+            <p id="modalReports" class="text-lg font-bold text-black"></p>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Sistema de carga con múltiples CDNs de respaldo -->
+    <script>
+      (function() {
+        let scriptsLoaded = {
+          d3: false,
+          html2canvas: false,
+          jspdf: false
+        };
+        
+        let loadAttempts = {
+          d3: 0,
+          html2canvas: 0,
+          jspdf: 0
+        };
+        
+        // CDNs alternativos para cada librería
+        const cdnOptions = {
+          d3: [
+            'https://d3js.org/d3.v7.min.js',
+            'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js',
+            'https://unpkg.com/d3@7/dist/d3.min.js'
+          ],
+          html2canvas: [
+            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+            'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
+            'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js'
+          ],
+          jspdf: [
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+            'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+            'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+          ]
+        };
+        
+        function checkAllLoaded() {
+          return scriptsLoaded.d3 && scriptsLoaded.html2canvas && scriptsLoaded.jspdf;
+        }
+        
+        function tryInitialize() {
+          if (checkAllLoaded() && typeof initializeApp === 'function') {
+            console.log('✅ All libraries loaded successfully!');
+            initializeApp();
+          }
+        }
+        
+        function loadScriptWithFallback(name, urls, index = 0) {
+          if (index >= urls.length) {
+            console.error(`❌ Failed to load ${name} from all CDNs`);
+            if (name === 'd3') {
+              document.getElementById('employeeCount').innerHTML = 
+                '<span class="text-red-500">⚠️ Error: Cannot load D3 library. Check your internet connection or firewall settings.</span>';
+            }
+            return;
+          }
+          
+          const url = urls[index];
+          console.log(`⏳ Loading ${name} from CDN ${index + 1}/${urls.length}: ${url.split('/')[2]}`);
+          
+          const script = document.createElement('script');
+          script.src = url;
+          
+          script.onload = function() {
+            console.log(`✅ ${name} loaded from ${url.split('/')[2]}`);
+            scriptsLoaded[name] = true;
+            loadAttempts[name] = index + 1;
+            tryInitialize();
+          };
+          
+          script.onerror = function() {
+            console.warn(`⚠️ Failed to load ${name} from ${url.split('/')[2]}, trying next CDN...`);
+            loadAttempts[name]++;
+            // Intentar con el siguiente CDN
+            setTimeout(() => loadScriptWithFallback(name, urls, index + 1), 500);
+          };
+          
+          document.body.appendChild(script);
+        }
+        
+        // Iniciar carga de todas las librerías
+        loadScriptWithFallback('d3', cdnOptions.d3);
+        loadScriptWithFallback('html2canvas', cdnOptions.html2canvas);
+        loadScriptWithFallback('jspdf', cdnOptions.jspdf);
+        
+        // Timeout de seguridad (30 segundos)
+        setTimeout(function() {
+          if (!checkAllLoaded()) {
+            console.error('❌ Timeout: Not all libraries loaded after 30 seconds');
+            console.log('Status:', scriptsLoaded);
+            if (!scriptsLoaded.d3) {
+              document.getElementById('employeeCount').innerHTML = 
+                '<span class="text-red-500">⚠️ Error: Network timeout. Please check your connection and reload the page.</span>';
+            }
+          }
+        }, 30000);
+      })();
+    </script>
+
     <script>
       // ============================================
       // CONFIGURACIÓN
       // ============================================
-      // OPCIÓN 1: Usa Google Apps Script (RECOMENDADO - sin problemas CORS)
-      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlozZEso7yKBhymlR3Glg4K_zs2k6-v4j0ti8XIbLFELXD1QR0RnD12_h_wIb51Lib/exec';
-      
-      // OPCIÓN 2: Usa datos embebidos para prueba
-      const USE_EMBEDDED_DATA = false;
-      
-      // Datos de ejemplo
-      const embeddedData = [
-        {name: "MIGUEL PINA", role: "Chief Executive Officer (CEO)", department: "Producto", manager: "", email: "miguel.pina@mondraker.com", phone: "+34 600 000 000"},
-        {name: "LUIS_MIGUEL MARTINEZ", role: "Global Product Manager", department: "Producto", manager: "MIGUEL PINA", email: "luis.martinez@mondraker.com", phone: ""},
-        {name: "ANDRES CLIMENT", role: "Design Engineer Lead", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
-        {name: "MANUEL JURADO", role: "Ingeniero diseño industrial Jr", department: "Producto", manager: "ANDRES CLIMENT", email: "", phone: ""},
-        {name: "SALVADOR MANCHÓN", role: "Product Manager Senior", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
-        {name: "FRANCISCO_JAVIER MARTINEZ", role: "Mecánica Process Manager A", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
-        {name: "ALEJANDRO SOLA", role: "Adjunto Product Manager", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
-        {name: "JAVIER ALFARO", role: "Adjunto Product Manager II", department: "Producto", manager: "SALVADOR MANCHÓN", email: "", phone: ""},
-        {name: "JOSE_JUAN GINER", role: "Quality Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
-        {name: "JOSE_LUIS NOGALES", role: "Quality Supervisor", department: "Producto", manager: "JOSE_JUAN GINER", email: "", phone: ""},
-        {name: "LEME, RICARDO", role: "CTG Design Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
-        {name: "CESAR GONZALEZ", role: "CTG Junior Designer", department: "Producto", manager: "LEME, RICARDO", email: "", phone: ""},
-        {name: "ISRAEL ROMERO", role: "Product and comm. Manager", department: "Producto", manager: "LUIS_MIGUEL MARTINEZ", email: "", phone: ""},
-        {name: "JUAN PINA", role: "Director de RRHH", department: "RRHH", manager: "MIGUEL PINA", email: "juan.pina@mondraker.com", phone: "+34 600 111 111"},
-        {name: "ALBA PLANELLES", role: "Laboral", department: "RRHH", manager: "JUAN PINA", email: "", phone: ""},
-        {name: "ANDRÉS GIL", role: "Filiales", department: "RRHH", manager: "JUAN PINA", email: "", phone: ""}
-      ];
+      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywyIp6chrjmy30T7Dj8wTp9biDw_W1c3NXuRUeRo18rluWWRyH2asrIktjGBr7NISs/exec';
 
       // Variables globales
       let allData = [];
       let currentFilter = 'all';
       let svg, g, zoom, root, tree;
       
-      const CARD_WIDTH = 260;
+      const CARD_WIDTH = 275;
       const CARD_HEIGHT = 90;
       const SPACING_V = 120;
       const SPACING_H = 340;
       const width = window.innerWidth;
       const height = window.innerHeight;
 
-      // Función para convertir datos planos a jerarquía
+      // Función para convertir datos planos a jerarquía usando IDs
       function buildHierarchy(flatData) {
         const map = {};
         const roots = [];
         
+        // Crear mapa con IDs como clave
         flatData.forEach(person => {
-          map[person.name] = {
+          map[person.id] = {
+            id: person.id,
             name: person.name,
             role: person.role,
             department: person.department,
@@ -256,40 +458,62 @@
           };
         });
         
+        // Construir jerarquía usando manager_id
         flatData.forEach(person => {
-          if (person.manager && map[person.manager]) {
-            map[person.manager].children.push(map[person.name]);
+          if (person.manager_id && map[person.manager_id]) {
+            map[person.manager_id].children.push(map[person.id]);
           } else {
-            roots.push(map[person.name]);
+            roots.push(map[person.id]);
           }
         });
         
-        return roots.length === 1 ? roots[0] : { name: "Organización", role: "", department: "", children: roots };
+        return roots.length === 1 ? roots[0] : { 
+          id: "root", 
+          name: "Organization", 
+          role: "", 
+          department: "", 
+          children: roots 
+        };
       }
 
-      // Cargar datos
+      // Cargar datos desde Apps Script
       async function loadData() {
         try {
-          if (USE_EMBEDDED_DATA) {
-            allData = embeddedData;
-            initializeChart();
-          } else {
-            const response = await fetch(APPS_SCRIPT_URL);
-            const data = await response.json();
-            allData = data;
-            initializeChart();
+          console.log('🔄 Loading data from Google Sheets...');
+          const response = await fetch(APPS_SCRIPT_URL);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
+          
+          const data = await response.json();
+          console.log('✅ Data received:', data);
+          
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          
+          // Validar que los datos tienen IDs
+          const missingIds = data.filter(person => !person.id);
+          if (missingIds.length > 0) {
+            console.warn('⚠️ Warning: Some employees are missing IDs:', missingIds);
+          }
+          
+          allData = data;
+          initializeChart();
         } catch (error) {
-          console.error('Error cargando datos:', error);
+          console.error('❌ Error loading data:', error);
           document.getElementById('employeeCount').innerHTML = 
-            '<span class="text-red-500">⚠️ Error al cargar datos</span>';
+            '<span class="text-red-500">⚠️ Error: ' + error.message + '</span>';
         }
       }
 
       // Inicializar el organigrama
       function initializeChart() {
+        console.log('📊 Initializing chart with', allData.length, 'employees');
+        
         document.getElementById('employeeCount').innerHTML = 
-          `<span class="text-white font-bold">${allData.length}</span> <span class="text-gray-500">empleados</span>`;
+          `<span class="text-black font-bold">${allData.length}</span> <span class="text-gray-500">employees</span>`;
         
         svg = d3.select("#chart-container").append("svg")
           .attr("viewBox", [-width / 2, -height / 2, width, height])
@@ -321,7 +545,7 @@
         g.append("g")
           .attr("fill", "none")
           .attr("stroke", "#0071B9")
-          .attr("stroke-opacity", 0.3)
+          .attr("stroke-opacity", 0.4)
           .attr("stroke-width", 2)
           .selectAll("path")
           .data(root.links())
@@ -343,20 +567,33 @@
           .attr("x", 0)
           .attr("y", -CARD_HEIGHT / 2)
           .attr("rx", 8)
-          .attr("fill", "#1a1a1a")
-          .attr("stroke", "#333")
-          .attr("stroke-width", 1)
+          .attr("fill", "#ffffff")
+          .attr("stroke", "#e2e3e4")
+          .attr("stroke-width", 2)
           .attr("class", "node-card")
           .on("click", (event, d) => showModal(d.data));
 
-        // Barra superior azul Mondraker
+        // Barra superior con color por departamento
+        const departmentColors = {
+          'Producto': '#0071B9',      // Azul Mondraker (Product)
+          'RRHH': '#10b981',          // Verde esmeralda (HR)
+          'FINANCE': '#f59e0b',       // Ámbar/Naranja (Finance)
+          'MARKETING': '#ec4899',     // Rosa/Magenta (Marketing)
+          'OPERATIONS': '#8b5cf6',    // Púrpura (Operations)
+          'WAREHOUSE': '#06b6d4',     // Cyan (Warehouse)
+          'PRODUCTION': '#ef4444',    // Rojo (Production)
+          'IT': '#6366f1',            // Índigo (IT)
+          'SALES': '#14b8a6',         // Teal (Sales)
+          'CUSTOMER SERVICE': '#f97316' // Naranja brillante (Customer Service)
+        };
+        
         node.append("rect")
           .attr("width", CARD_WIDTH)
           .attr("height", 6)
           .attr("x", 0)
           .attr("y", -CARD_HEIGHT / 2)
           .attr("rx", 8)
-          .attr("fill", "#0071B9");
+          .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
 
         // Nombre
         node.append("text")
@@ -364,7 +601,7 @@
           .attr("x", 16)
           .text(d => d.data.name)
           .attr("class", "font-bold text-sm")
-          .attr("fill", "#ffffff");
+          .attr("fill", "#000000");
 
         // Puesto (con wrap)
         node.each(function(d) {
@@ -373,7 +610,7 @@
             .attr("x", 16)
             .attr("y", 8)
             .attr("class", "text-[11px] font-medium uppercase tracking-wide")
-            .attr("fill", "#888");
+            .attr("fill", "#666");
 
           const words = d.data.role.split(/\s+/).reverse();
           let line = [];
@@ -394,13 +631,13 @@
           }
         });
 
-        // Departamento
+        // Departamento con color correspondiente
         node.filter(d => d.data.department).append("text")
           .attr("y", (CARD_HEIGHT / 2) - 14)
           .attr("x", 16)
           .text(d => d.data.department.toUpperCase())
           .attr("class", "text-[10px] font-bold tracking-wider")
-          .attr("fill", "#0071B9");
+          .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
 
         // Indicador de reportes directos
         node.filter(d => d.children && d.children.length > 0).append("g")
@@ -409,7 +646,7 @@
             g.append("circle")
               .attr("r", 14)
               .attr("fill", "#0071B9")
-              .attr("stroke", "#000")
+              .attr("stroke", "#ffffff")
               .attr("stroke-width", 2);
             g.append("text")
               .attr("text-anchor", "middle")
@@ -456,16 +693,34 @@
           : allData.filter(p => p.department === dept);
         
         document.getElementById('employeeCount').innerHTML = 
-          `<span class="text-white font-bold">${filtered.length}</span> <span class="text-gray-500">de ${allData.length} empleados</span>`;
+          `<span class="text-black font-bold">${filtered.length}</span> <span class="text-gray-500">of ${allData.length} employees</span>`;
         
         renderChart(filtered);
       }
 
       // Modal de detalles
       function showModal(data) {
+        // Paleta de colores por departamento (igual que en las tarjetas)
+        const departmentColors = {
+          'Producto': '#0071B9',
+          'RRHH': '#10b981',
+          'FINANCE': '#f59e0b',
+          'MARKETING': '#ec4899',
+          'OPERATIONS': '#8b5cf6',
+          'WAREHOUSE': '#06b6d4',
+          'PRODUCTION': '#ef4444',
+          'IT': '#6366f1',
+          'SALES': '#14b8a6',
+          'CUSTOMER SERVICE': '#f97316'
+        };
+        
         document.getElementById('modalName').textContent = data.name;
         document.getElementById('modalRole').textContent = data.role;
-        document.getElementById('modalDept').textContent = data.department || 'N/A';
+        
+        const deptElement = document.getElementById('modalDept');
+        deptElement.textContent = data.department || 'N/A';
+        // Aplicar color correspondiente al departamento
+        deptElement.style.color = departmentColors[data.department] || '#0071B9';
         
         if (data.email) {
           document.getElementById('modalEmailSection').classList.remove('hidden');
@@ -483,7 +738,7 @@
         }
         
         const reports = data.children ? data.children.length : 0;
-        document.getElementById('modalReports').textContent = reports === 0 ? 'Ninguno' : reports;
+        document.getElementById('modalReports').textContent = reports === 0 ? 'None' : reports;
         
         document.getElementById('modal').classList.remove('hidden');
       }
@@ -496,10 +751,18 @@
 
       // Controles de zoom
       function resetZoom() {
-        svg.transition().duration(750).call(
-          zoom.transform,
-          d3.zoomIdentity.translate(width/4, height/2).scale(0.7)
-        );
+        // El nodo raíz (CEO) está en (0, 0) en coordenadas del SVG
+        // El viewBox [-width/2, -height/2, width, height] ya centra el origen en la pantalla
+        // Solo necesitamos aplicar un scale sin translate adicional
+        
+        const scale = 0.7;
+        
+        svg.transition()
+          .duration(750)
+          .call(
+            zoom.transform,
+            d3.zoomIdentity.scale(scale)
+          );
       }
 
       function zoomIn() {
@@ -510,12 +773,302 @@
         svg.transition().duration(300).call(zoom.scaleBy, 0.7);
       }
 
+      // ============================================
+      // FUNCIONES DE EXPORTACIÓN
+      // ============================================
+      
+      // Toggle dropdown del menú de exportación
+      function toggleDropdown(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('exportDropdown');
+        dropdown.classList.toggle('show');
+      }
+
+      // Cerrar dropdown si se hace click fuera
+      window.onclick = function(event) {
+        if (!event.target.matches('.btn-export') && !event.target.closest('.btn-export')) {
+          const dropdowns = document.getElementsByClassName("dropdown-content");
+          for (let i = 0; i < dropdowns.length; i++) {
+            const openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+              openDropdown.classList.remove('show');
+            }
+          }
+        }
+      }
+      
+      async function exportToPNG() {
+        try {
+          // Cerrar el dropdown
+          document.getElementById('exportDropdown').classList.remove('show');
+          
+          document.getElementById('exportingOverlay').classList.remove('hidden');
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Obtener todos los elementos g visibles (no display:none)
+          const visibleNodes = g.selectAll('g').filter(function() {
+            return this.style.display !== 'none';
+          });
+          
+          // Calcular bounding box solo de nodos visibles
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          visibleNodes.each(function() {
+            const bbox = this.getBBox();
+            const transform = this.getAttribute('transform');
+            let x = 0, y = 0;
+            
+            if (transform) {
+              const match = transform.match(/translate\(([^,]+),([^)]+)\)/);
+              if (match) {
+                x = parseFloat(match[1]);
+                y = parseFloat(match[2]);
+              }
+            }
+            
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y - CARD_HEIGHT/2);
+            maxX = Math.max(maxX, x + CARD_WIDTH);
+            maxY = Math.max(maxY, y + CARD_HEIGHT/2);
+          });
+          
+          // Añadir margen
+          const margin = 100;
+          minX -= margin;
+          minY -= margin;
+          maxX += margin;
+          maxY += margin;
+          
+          const exportWidth = maxX - minX;
+          const exportHeight = maxY - minY;
+          
+          // Crear un contenedor temporal para exportación
+          const tempContainer = document.createElement('div');
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.width = '1920px';
+          tempContainer.style.height = '1080px';
+          tempContainer.style.backgroundColor = '#ffffff';
+          document.body.appendChild(tempContainer);
+          
+          // Crear SVG temporal con viewBox ajustado al contenido visible
+          const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          tempSvg.setAttribute('width', '1920');
+          tempSvg.setAttribute('height', '1080');
+          tempSvg.setAttribute('viewBox', `${minX} ${minY} ${exportWidth} ${exportHeight}`);
+          tempSvg.style.backgroundColor = '#ffffff';
+          
+          // Copiar los estilos necesarios
+          const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+          styleElement.textContent = `
+            text { font-family: 'Inter', sans-serif; }
+            .node-card { cursor: pointer; }
+          `;
+          tempSvg.appendChild(styleElement);
+          
+          // Clonar el grupo g con todo el contenido
+          const clonedG = g.node().cloneNode(true);
+          tempSvg.appendChild(clonedG);
+          
+          tempContainer.appendChild(tempSvg);
+          
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Capturar el contenedor temporal
+          const canvas = await html2canvas(tempContainer, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            logging: false,
+            width: 1920,
+            height: 1080
+          });
+          
+          // Limpiar
+          document.body.removeChild(tempContainer);
+          
+          // Descargar imagen
+          const link = document.createElement('a');
+          const timestamp = new Date().toISOString().split('T')[0];
+          link.download = `Mondraker_Organizational_Chart_${timestamp}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          
+          document.getElementById('exportingOverlay').classList.add('hidden');
+        } catch (error) {
+          console.error('Error exporting PNG:', error);
+          alert('Error exporting chart. Please try again.');
+          document.getElementById('exportingOverlay').classList.add('hidden');
+        }
+      }
+
+      async function exportToPDF() {
+        try {
+          // Cerrar el dropdown
+          document.getElementById('exportDropdown').classList.remove('show');
+          
+          document.getElementById('exportingOverlay').classList.remove('hidden');
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Obtener todos los elementos g visibles (no display:none)
+          const visibleNodes = g.selectAll('g').filter(function() {
+            return this.style.display !== 'none';
+          });
+          
+          // Calcular bounding box solo de nodos visibles
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          
+          visibleNodes.each(function() {
+            const bbox = this.getBBox();
+            const transform = this.getAttribute('transform');
+            let x = 0, y = 0;
+            
+            if (transform) {
+              const match = transform.match(/translate\(([^,]+),([^)]+)\)/);
+              if (match) {
+                x = parseFloat(match[1]);
+                y = parseFloat(match[2]);
+              }
+            }
+            
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y - CARD_HEIGHT/2);
+            maxX = Math.max(maxX, x + CARD_WIDTH);
+            maxY = Math.max(maxY, y + CARD_HEIGHT/2);
+          });
+          
+          // Añadir margen
+          const margin = 100;
+          minX -= margin;
+          minY -= margin;
+          maxX += margin;
+          maxY += margin;
+          
+          const exportWidth = maxX - minX;
+          const exportHeight = maxY - minY;
+          
+          // Crear un contenedor temporal para exportación
+          const tempContainer = document.createElement('div');
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.width = '1920px';
+          tempContainer.style.height = '1080px';
+          tempContainer.style.backgroundColor = '#ffffff';
+          document.body.appendChild(tempContainer);
+          
+          // Crear SVG temporal con viewBox ajustado al contenido visible
+          const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          tempSvg.setAttribute('width', '1920');
+          tempSvg.setAttribute('height', '1080');
+          tempSvg.setAttribute('viewBox', `${minX} ${minY} ${exportWidth} ${exportHeight}`);
+          tempSvg.style.backgroundColor = '#ffffff';
+          
+          // Copiar los estilos necesarios
+          const styleElement = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+          styleElement.textContent = `
+            text { font-family: 'Inter', sans-serif; }
+            .node-card { cursor: pointer; }
+          `;
+          tempSvg.appendChild(styleElement);
+          
+          // Clonar el grupo g con todo el contenido
+          const clonedG = g.node().cloneNode(true);
+          tempSvg.appendChild(clonedG);
+          
+          tempContainer.appendChild(tempSvg);
+          
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Capturar el contenedor temporal
+          const canvas = await html2canvas(tempContainer, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            logging: false,
+            width: 1920,
+            height: 1080
+          });
+          
+          // Limpiar
+          document.body.removeChild(tempContainer);
+          
+          const imgData = canvas.toDataURL('image/png');
+          const { jsPDF } = window.jspdf;
+          
+          // Determinar orientación según el aspect ratio
+          const aspectRatio = exportWidth / exportHeight;
+          const orientation = aspectRatio > 1.3 ? 'landscape' : 'portrait';
+          
+          // Crear PDF
+          const pdf = new jsPDF({
+            orientation: orientation,
+            unit: 'mm',
+            format: 'a3'
+          });
+          
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          // Calcular dimensiones manteniendo aspect ratio
+          let imgWidth = pdfWidth - 20; // margen de 10mm a cada lado
+          let imgHeight = (canvas.height / canvas.width) * imgWidth;
+          
+          // Si la altura es mayor que la página, ajustar por altura
+          if (imgHeight > pdfHeight - 20) {
+            imgHeight = pdfHeight - 20;
+            imgWidth = (canvas.width / canvas.height) * imgHeight;
+          }
+          
+          // Centrar en la página
+          const x = (pdfWidth - imgWidth) / 2;
+          const y = (pdfHeight - imgHeight) / 2;
+          
+          pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+          
+          const timestamp = new Date().toISOString().split('T')[0];
+          pdf.save(`Mondraker_Organizational_Chart_${timestamp}.pdf`);
+          
+          document.getElementById('exportingOverlay').classList.add('hidden');
+        } catch (error) {
+          console.error('Error exporting PDF:', error);
+          alert('Error exporting chart. Please try again.');
+          document.getElementById('exportingOverlay').classList.add('hidden');
+        }
+      }
+
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeModal();
       });
 
-      // Iniciar
-      loadData();
+      // Función de inicialización de la aplicación
+      function initializeApp() {
+        console.log('🚀 Starting Mondraker Organizational Chart...');
+        
+        // Verificación final de librerías
+        if (typeof d3 === 'undefined') {
+          console.error('❌ D3 is not available');
+          document.getElementById('employeeCount').innerHTML = 
+            '<span class="text-red-500">⚠️ Error: D3 library not loaded</span>';
+          return;
+        }
+        
+        if (typeof html2canvas === 'undefined') {
+          console.warn('⚠️ html2canvas not available - Export to PNG will not work');
+        }
+        
+        if (typeof window.jspdf === 'undefined') {
+          console.warn('⚠️ jsPDF not available - Export to PDF will not work');
+        }
+        
+        // Iniciar carga de datos
+        loadData();
+      }
+
+      // Fallback: Si las librerías ya estaban cargadas cuando llegamos aquí
+      if (typeof d3 !== 'undefined' && typeof html2canvas !== 'undefined' && typeof window.jspdf !== 'undefined') {
+        console.log('✅ Libraries already loaded, initializing immediately');
+        initializeApp();
+      }
     </script>
 </body>
 </html>
