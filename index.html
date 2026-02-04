@@ -2,11 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mondraker Organizational Chart</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+      
+      * {
+        box-sizing: border-box;
+      }
       
       body { 
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -33,9 +37,9 @@
       .login-box {
         background: white;
         border-radius: 16px;
-        padding: 48px;
-        width: 100%;
-        max-width: 400px;
+        padding: 40px;
+        width: 90%;
+        max-width: 360px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         text-align: center;
       }
@@ -176,13 +180,14 @@
         color: #000000;
         transition: all 0.3s;
         font-weight: 700;
-        width: 36px;
-        height: 36px;
+        min-width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        padding: 0 8px;
       }
       
       .btn-icon:hover {
@@ -204,9 +209,9 @@
       
       .loading {
         display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 3px solid rgba(0, 113, 185, 0.3);
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(0, 113, 185, 0.3);
         border-radius: 50%;
         border-top-color: #0071B9;
         animation: spin 1s ease-in-out infinite;
@@ -229,14 +234,14 @@
         z-index: 100;
         border: 2px solid #e2e3e4;
         border-radius: 8px;
-        margin-top: 8px;
+        margin-top: 4px;
         max-height: 300px;
         overflow-y: auto;
       }
 
       .dropdown-content button {
         color: #000000;
-        padding: 10px 14px;
+        padding: 8px 12px;
         text-decoration: none;
         display: block;
         width: 100%;
@@ -261,27 +266,82 @@
         background: rgba(255, 255, 255, 0.9);
       }
       
-      /* Select personalizado para departamentos */
-      .dept-select {
-        appearance: none;
-        background: #e2e3e4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
-        padding: 8px 32px 8px 12px;
+      /* Multi-select dropdown para departamentos */
+      .dept-dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      
+      .dept-dropdown-btn {
+        background: #e2e3e4;
+        padding: 6px 28px 6px 10px;
         border: none;
-        border-radius: 8px;
-        font-size: 11px;
+        border-radius: 6px;
+        font-size: 10px;
         font-weight: 700;
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.3s;
+        white-space: nowrap;
+        position: relative;
       }
       
-      .dept-select:hover {
+      .dept-dropdown-btn::after {
+        content: '▼';
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 8px;
+      }
+      
+      .dept-dropdown-btn:hover {
         background-color: #d0d1d2;
       }
       
-      .dept-select:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px #0071B9;
+      .dept-dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #ffffff;
+        min-width: 200px;
+        max-height: 280px;
+        overflow-y: auto;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+        z-index: 100;
+        border: 2px solid #e2e3e4;
+        border-radius: 8px;
+        margin-top: 4px;
+        padding: 6px 0;
+      }
+      
+      .dept-dropdown-content.show { display: block; }
+      
+      .dept-option {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+      
+      .dept-option:hover {
+        background-color: #f3f4f6;
+      }
+      
+      .dept-option input {
+        margin-right: 8px;
+        accent-color: #0071B9;
+        width: 14px;
+        height: 14px;
+      }
+      
+      .dept-option.all-option {
+        border-bottom: 1px solid #e2e3e4;
+        margin-bottom: 4px;
+        padding-bottom: 10px;
+        font-weight: 700;
       }
       
       /* Descripción del puesto con scroll */
@@ -304,6 +364,64 @@
         background: #0071B9;
         border-radius: 3px;
       }
+      
+      /* Header compacto para móvil */
+      .header-compact {
+        padding: 8px 12px;
+      }
+      
+      @media (max-width: 768px) {
+        .header-compact {
+          padding: 6px 8px;
+        }
+        
+        .hide-mobile {
+          display: none !important;
+        }
+        
+        .logo-mondraker {
+          font-size: 16px;
+        }
+        
+        .btn-icon {
+          min-width: 28px;
+          height: 28px;
+          font-size: 11px;
+        }
+        
+        .search-input {
+          padding: 6px 10px;
+          font-size: 11px;
+        }
+        
+        .dept-dropdown-btn {
+          font-size: 9px;
+          padding: 5px 22px 5px 8px;
+        }
+        
+        #chart-container {
+          padding-top: 52px !important;
+        }
+        
+        .modal-content {
+          padding: 16px;
+          margin: 8px;
+        }
+        
+        .modal-content h2 {
+          font-size: 18px;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .search-mobile-hidden {
+          display: none;
+        }
+        
+        #chart-container {
+          padding-top: 48px !important;
+        }
+      }
     </style>
 </head>
 <body class="w-screen h-screen">
@@ -313,7 +431,7 @@
     <div id="loginScreen" class="login-screen">
       <div class="login-box">
         <div class="mb-6">
-          <h1 class="logo-mondraker text-3xl mb-2">MONDRAKER</h1>
+          <h1 class="logo-mondraker text-2xl mb-2">MONDRAKER</h1>
           <p class="text-gray-500 text-sm">Organizational Chart</p>
         </div>
         <div class="mb-4">
@@ -340,137 +458,128 @@
     <div id="mainApp" class="hidden">
       <!-- Overlay de exportación -->
       <div id="exportingOverlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
-        <div class="bg-white border-2 border-blue-500 rounded-2xl p-8 text-center shadow-2xl">
-          <div class="loading mx-auto mb-4" style="width: 40px; height: 40px; border-width: 4px;"></div>
-          <p class="text-black text-lg font-bold">Exporting chart...</p>
-          <p class="text-gray-600 text-sm mt-2">Please wait a moment</p>
+        <div class="bg-white border-2 border-blue-500 rounded-2xl p-6 text-center shadow-2xl">
+          <div class="loading mx-auto mb-3" style="width: 32px; height: 32px; border-width: 3px;"></div>
+          <p class="text-black text-base font-bold">Exporting...</p>
         </div>
       </div>
 
-      <!-- Panel de Control Superior COMPACTO -->
-      <div class="absolute top-0 left-0 right-0 z-50 bg-white border-b-2 border-gray-200 fade-in shadow-sm">
-        <div class="max-w-full mx-auto px-4 py-3">
-          <div class="flex items-center justify-between gap-4">
-            <!-- Logo y título -->
-            <div class="flex items-center gap-3 flex-shrink-0">
-              <h1 class="logo-mondraker text-xl">MONDRAKER</h1>
-              <span class="text-gray-400 text-xs font-light hidden sm:inline">Org Chart</span>
-            </div>
-            
-            <!-- Búsqueda compacta -->
-            <div class="flex-1 max-w-xs">
-              <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="🔍 Search..." 
-                class="search-input w-full px-3 py-2 rounded-lg text-xs font-medium"
-              />
-            </div>
-            
-            <!-- Controles agrupados -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-              <!-- Selector de departamento -->
-              <select id="deptSelect" onchange="filterDept(this.value)" class="dept-select">
-                <option value="all">ALL DEPTS</option>
-                <option value="Producto">PRODUCT</option>
-                <option value="RRHH">HR</option>
-                <option value="FINANCE">FINANCE</option>
-                <option value="MARKETING">MARKETING</option>
-                <option value="OPERATIONS">OPERATIONS</option>
-                <option value="WAREHOUSE">WAREHOUSE</option>
-                <option value="PRODUCTION">PRODUCTION</option>
-                <option value="IT">IT</option>
-                <option value="SALES">SALES</option>
-                <option value="CUSTOMER SERVICE">CUSTOMER SVC</option>
-              </select>
-              
-              <!-- Separador visual -->
-              <div class="w-px h-6 bg-gray-300 mx-1"></div>
-              
-              <!-- Botón de orientación -->
-              <button onclick="toggleOrientation()" id="orientationBtn" class="btn-icon" title="Toggle orientation (Horizontal/Vertical)">
-                ↔️
+      <!-- Panel de Control Superior ULTRA COMPACTO -->
+      <div class="absolute top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm header-compact">
+        <div class="flex items-center justify-between gap-2">
+          <!-- Logo -->
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <h1 class="logo-mondraker text-lg">MONDRAKER</h1>
+          </div>
+          
+          <!-- Búsqueda compacta - oculta en móvil muy pequeño -->
+          <div class="flex-1 max-w-[180px] search-mobile-hidden">
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="🔍 Search..." 
+              class="search-input w-full px-2 py-1.5 rounded text-xs"
+            />
+          </div>
+          
+          <!-- Controles -->
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <!-- Dropdown de departamentos dinámico -->
+            <div class="dept-dropdown">
+              <button onclick="toggleDeptDropdown(event)" class="dept-dropdown-btn" id="deptDropdownBtn">
+                ALL DEPTS
               </button>
-              
-              <!-- Controles de zoom -->
-              <button onclick="zoomOut()" class="btn-icon" title="Zoom out">➖</button>
-              <button onclick="zoomIn()" class="btn-icon" title="Zoom in">➕</button>
-              <button onclick="resetZoom()" class="btn-icon" title="Reset view">🏠</button>
-              
-              <!-- Separador visual -->
-              <div class="w-px h-6 bg-gray-300 mx-1"></div>
-              
-              <!-- Contador de empleados -->
-              <div class="text-gray-600 text-xs hidden md:block">
-                <span id="employeeCount"><span class="loading"></span></span>
+              <div id="deptDropdownContent" class="dept-dropdown-content">
+                <!-- Se llena dinámicamente -->
               </div>
-              
-              <!-- Botón de Exportar -->
-              <div class="dropdown">
-                <button onclick="toggleDropdown(event)" class="btn-export px-3 py-2 rounded-lg text-xs flex items-center gap-1">
-                  📥 <span class="hidden sm:inline">EXPORT</span>
-                  <span class="text-xs">▼</span>
-                </button>
-                <div id="exportDropdown" class="dropdown-content" style="right: 0;">
-                  <button onclick="exportToPNG()">📷 Export as PNG</button>
-                  <button onclick="exportToPDF()">📄 Export as PDF</button>
-                </div>
+            </div>
+            
+            <!-- Separador -->
+            <div class="w-px h-5 bg-gray-300 mx-0.5 hide-mobile"></div>
+            
+            <!-- Orientación -->
+            <button onclick="toggleOrientation()" id="orientationBtn" class="btn-icon" title="Toggle orientation">
+              ↔️
+            </button>
+            
+            <!-- Zoom -->
+            <button onclick="zoomOut()" class="btn-icon hide-mobile" title="Zoom out">➖</button>
+            <button onclick="zoomIn()" class="btn-icon hide-mobile" title="Zoom in">➕</button>
+            <button onclick="resetZoom()" class="btn-icon" title="Reset">🏠</button>
+            
+            <!-- Separador -->
+            <div class="w-px h-5 bg-gray-300 mx-0.5 hide-mobile"></div>
+            
+            <!-- Contador -->
+            <div class="text-gray-600 text-xs hide-mobile">
+              <span id="employeeCount"><span class="loading"></span></span>
+            </div>
+            
+            <!-- Export -->
+            <div class="dropdown">
+              <button onclick="toggleDropdown(event)" class="btn-export px-2 py-1.5 rounded text-xs flex items-center gap-1">
+                📥
+                <span class="text-xs">▼</span>
+              </button>
+              <div id="exportDropdown" class="dropdown-content" style="right: 0;">
+                <button onclick="exportToPNG()">📷 PNG</button>
+                <button onclick="exportToPDF()">📄 PDF</button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Contenedor del Organigrama -->
-      <div id="chart-container" class="w-full h-full pt-16"></div>
+      <!-- Contenedor del Organigrama - altura completa menos header -->
+      <div id="chart-container" class="w-full h-full pt-14"></div>
 
-      <!-- Modal de Detalles MEJORADO con scroll para descripciones largas -->
-      <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModal(event)">
-        <div class="modal-content bg-white border-2 border-gray-200 rounded-2xl shadow-2xl max-w-4xl w-full p-8 fade-in" onclick="event.stopPropagation()">
-          <div class="flex justify-between items-start mb-6">
-            <div class="flex items-center gap-4">
+      <!-- Modal de Detalles -->
+      <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" onclick="closeModal(event)">
+        <div class="modal-content bg-white border-2 border-gray-200 rounded-2xl shadow-2xl max-w-4xl w-full p-6 md:p-8 fade-in" onclick="event.stopPropagation()">
+          <div class="flex justify-between items-start mb-4 md:mb-6">
+            <div class="flex items-center gap-3 md:gap-4">
               <!-- Foto del empleado -->
-              <div id="modalPhoto" class="w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg flex-shrink-0">
-                <span id="modalInitials" class="text-3xl font-bold text-gray-400"></span>
+              <div id="modalPhoto" class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg flex-shrink-0">
+                <span id="modalInitials" class="text-xl md:text-3xl font-bold text-gray-400"></span>
                 <img id="modalPhotoImg" class="hidden w-full h-full object-cover" src="" alt="">
               </div>
               <div>
-                <h2 id="modalName" class="text-2xl font-bold text-black mb-1"></h2>
-                <p id="modalRoleHeader" class="text-sm text-gray-600"></p>
-                <div class="h-1 w-20 bg-gradient-to-r from-blue-500 to-transparent mt-2"></div>
+                <h2 id="modalName" class="text-xl md:text-2xl font-bold text-black mb-1"></h2>
+                <p id="modalRoleHeader" class="text-xs md:text-sm text-gray-600"></p>
+                <div class="h-1 w-16 md:w-20 bg-gradient-to-r from-blue-500 to-transparent mt-2"></div>
               </div>
             </div>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-black text-3xl transition flex-shrink-0">&times;</button>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-black text-2xl md:text-3xl transition flex-shrink-0">&times;</button>
           </div>
           
-          <div class="space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Department</p>
-                <p id="modalDept" class="text-base font-bold text-blue-600"></p>
+          <div class="space-y-2 md:space-y-3">
+            <div class="grid grid-cols-2 gap-2 md:gap-3">
+              <div class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200">
+                <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Department</p>
+                <p id="modalDept" class="text-sm md:text-base font-bold text-blue-600"></p>
               </div>
               
-              <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Direct Reports</p>
-                <p id="modalReports" class="text-base font-bold text-black"></p>
+              <div class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200">
+                <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Direct Reports</p>
+                <p id="modalReports" class="text-sm md:text-base font-bold text-black"></p>
               </div>
             </div>
             
-            <div id="modalEmailSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
-              <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Email</p>
-              <a id="modalEmail" href="#" class="text-base font-semibold text-blue-600 hover:text-blue-700 transition"></a>
+            <div id="modalEmailSection" class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 hidden">
+              <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Email</p>
+              <a id="modalEmail" href="#" class="text-sm md:text-base font-semibold text-blue-600 hover:text-blue-700 transition break-all"></a>
             </div>
             
-            <div id="modalPhoneSection" class="bg-gray-50 rounded-lg p-4 border border-gray-200 hidden">
-              <p class="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Phone</p>
-              <p id="modalPhone" class="text-base font-semibold text-black"></p>
+            <div id="modalPhoneSection" class="bg-gray-50 rounded-lg p-3 md:p-4 border border-gray-200 hidden">
+              <p class="text-[10px] md:text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Phone</p>
+              <p id="modalPhone" class="text-sm md:text-base font-semibold text-black"></p>
             </div>
             
-            <!-- Sección de descripción del puesto con scroll -->
-            <div id="modalDescSection" class="bg-blue-50 rounded-lg p-4 border border-blue-200 hidden">
-              <p class="text-xs text-blue-600 uppercase tracking-wider mb-2 font-semibold">Job Description</p>
+            <!-- Descripción del puesto -->
+            <div id="modalDescSection" class="bg-blue-50 rounded-lg p-3 md:p-4 border border-blue-200 hidden">
+              <p class="text-[10px] md:text-xs text-blue-600 uppercase tracking-wider mb-2 font-semibold">Job Description</p>
               <div class="description-box">
-                <p id="modalDesc" class="text-sm text-gray-700 leading-relaxed whitespace-pre-line"></p>
+                <p id="modalDesc" class="text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-line"></p>
               </div>
             </div>
           </div>
@@ -478,7 +587,7 @@
       </div>
     </div>
 
-    <!-- Sistema de carga con múltiples CDNs de respaldo -->
+    <!-- Sistema de carga de librerías -->
     <script>
       (function() {
         let scriptsLoaded = { d3: false, jspdf: false };
@@ -502,31 +611,26 @@
         
         function tryInitialize() {
           if (checkAllLoaded() && typeof initializeApp === 'function') {
-            console.log('✅ All libraries loaded successfully!');
+            console.log('✅ All libraries loaded!');
             initializeApp();
           }
         }
         
         function loadScriptWithFallback(name, urls, index = 0) {
           if (index >= urls.length) {
-            console.error(`❌ Failed to load ${name} from all CDNs`);
+            console.error(`❌ Failed to load ${name}`);
             return;
           }
           
-          const url = urls[index];
-          console.log(`⏳ Loading ${name} from CDN ${index + 1}/${urls.length}`);
-          
           const script = document.createElement('script');
-          script.src = url;
+          script.src = urls[index];
           
           script.onload = function() {
-            console.log(`✅ ${name} loaded`);
             scriptsLoaded[name] = true;
             tryInitialize();
           };
           
           script.onerror = function() {
-            console.warn(`⚠️ Failed to load ${name}, trying next CDN...`);
             setTimeout(() => loadScriptWithFallback(name, urls, index + 1), 500);
           };
           
@@ -535,12 +639,6 @@
         
         loadScriptWithFallback('d3', cdnOptions.d3);
         loadScriptWithFallback('jspdf', cdnOptions.jspdf);
-        
-        setTimeout(function() {
-          if (!checkAllLoaded()) {
-            console.error('❌ Timeout: Not all libraries loaded after 30 seconds');
-          }
-        }, 30000);
       })();
     </script>
 
@@ -561,9 +659,7 @@
         } else {
           input.classList.add('error');
           error.classList.remove('hidden');
-          setTimeout(() => {
-            input.classList.remove('error');
-          }, 500);
+          setTimeout(() => input.classList.remove('error'), 500);
         }
       }
       
@@ -583,12 +679,13 @@
 
       // Variables globales
       let allData = [];
-      let currentFilter = 'all';
-      let currentOrientation = 'horizontal'; // 'horizontal' o 'vertical'
+      let allDepartments = [];
+      let selectedDepartments = new Set(['all']);
+      let currentOrientation = 'horizontal';
       let svg, g, zoom, root, tree;
       
-      const CARD_WIDTH = 240;
-      const CARD_HEIGHT = 85;
+      const CARD_WIDTH = 220;
+      const CARD_HEIGHT = 80;
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -644,23 +741,128 @@
 
       async function loadData() {
         try {
-          console.log('🔄 Loading data from Google Sheets...');
+          console.log('🔄 Loading data...');
           const response = await fetch(APPS_SCRIPT_URL);
           
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           
           const data = await response.json();
-          console.log('✅ Data received:', data);
           
           if (data.error) throw new Error(data.error);
           
           allData = data;
+          
+          // Extraer departamentos únicos del Sheet
+          allDepartments = [...new Set(data.map(p => p.department).filter(d => d && d.trim() !== ''))].sort();
+          
+          // Construir el dropdown de departamentos
+          buildDepartmentDropdown();
+          
           initializeChart();
         } catch (error) {
-          console.error('❌ Error loading data:', error);
+          console.error('❌ Error:', error);
           document.getElementById('employeeCount').innerHTML = 
-            '<span class="text-red-500">⚠️ ' + error.message + '</span>';
+            '<span class="text-red-500">⚠️ Error</span>';
         }
+      }
+
+      // ============================================
+      // DROPDOWN DE DEPARTAMENTOS DINÁMICO
+      // ============================================
+      
+      function buildDepartmentDropdown() {
+        const container = document.getElementById('deptDropdownContent');
+        container.innerHTML = '';
+        
+        // Opción "Todos"
+        const allOption = document.createElement('label');
+        allOption.className = 'dept-option all-option';
+        allOption.innerHTML = `
+          <input type="checkbox" id="dept-all" checked onchange="handleDeptChange('all', this.checked)">
+          <span>ALL DEPARTMENTS</span>
+        `;
+        container.appendChild(allOption);
+        
+        // Opciones de cada departamento
+        allDepartments.forEach(dept => {
+          const option = document.createElement('label');
+          option.className = 'dept-option';
+          option.innerHTML = `
+            <input type="checkbox" id="dept-${dept}" onchange="handleDeptChange('${dept}', this.checked)">
+            <span style="color: ${departmentColors[dept] || '#333'}">${dept}</span>
+          `;
+          container.appendChild(option);
+        });
+      }
+      
+      function toggleDeptDropdown(event) {
+        event.stopPropagation();
+        document.getElementById('deptDropdownContent').classList.toggle('show');
+        // Cerrar otros dropdowns
+        document.getElementById('exportDropdown').classList.remove('show');
+      }
+      
+      function handleDeptChange(dept, checked) {
+        if (dept === 'all') {
+          if (checked) {
+            // Seleccionar "todos" desmarca los individuales
+            selectedDepartments = new Set(['all']);
+            allDepartments.forEach(d => {
+              const cb = document.getElementById(`dept-${d}`);
+              if (cb) cb.checked = false;
+            });
+          } else {
+            // No permitir desmarcar "todos" si no hay nada seleccionado
+            document.getElementById('dept-all').checked = true;
+          }
+        } else {
+          // Desmarcar "todos" al seleccionar individual
+          document.getElementById('dept-all').checked = false;
+          selectedDepartments.delete('all');
+          
+          if (checked) {
+            selectedDepartments.add(dept);
+          } else {
+            selectedDepartments.delete(dept);
+          }
+          
+          // Si no queda nada seleccionado, volver a "todos"
+          if (selectedDepartments.size === 0) {
+            selectedDepartments.add('all');
+            document.getElementById('dept-all').checked = true;
+          }
+        }
+        
+        updateDeptButtonText();
+        applyFilter();
+      }
+      
+      function updateDeptButtonText() {
+        const btn = document.getElementById('deptDropdownBtn');
+        if (selectedDepartments.has('all')) {
+          btn.textContent = 'ALL DEPTS';
+        } else if (selectedDepartments.size === 1) {
+          const dept = [...selectedDepartments][0];
+          btn.textContent = dept.length > 12 ? dept.substring(0, 10) + '...' : dept;
+        } else {
+          btn.textContent = `${selectedDepartments.size} DEPTS`;
+        }
+      }
+      
+      function applyFilter() {
+        let filtered;
+        
+        if (selectedDepartments.has('all')) {
+          filtered = allData;
+        } else {
+          filtered = allData.filter(p => selectedDepartments.has(p.department));
+        }
+        
+        document.getElementById('employeeCount').innerHTML = 
+          `<span class="font-bold">${filtered.length}</span>/${allData.length}`;
+        
+        renderChart(filtered);
+        resetZoom();
       }
 
       // ============================================
@@ -668,8 +870,6 @@
       // ============================================
       
       function initializeChart() {
-        console.log('📊 Initializing chart with', allData.length, 'employees');
-        
         document.getElementById('employeeCount').innerHTML = 
           `<span class="font-bold">${allData.length}</span> emp.`;
         
@@ -677,17 +877,6 @@
           .attr("viewBox", [-width / 2, -height / 2, width, height])
           .style("width", "100%")
           .style("height", "100%");
-
-        // Definir clipPath para las tarjetas
-        const defs = svg.append("defs");
-        defs.append("clipPath")
-          .attr("id", "card-clip")
-          .append("rect")
-          .attr("width", CARD_WIDTH - 20)
-          .attr("height", CARD_HEIGHT - 20)
-          .attr("x", 10)
-          .attr("y", 0)
-          .attr("rx", 4);
 
         g = svg.append("g");
         
@@ -707,22 +896,23 @@
         const hierarchyData = buildHierarchy(data);
         root = d3.hierarchy(hierarchyData);
         
-        // Espaciado según orientación
+        // Espaciado según orientación - VERTICAL MÁS COMPACTO HORIZONTALMENTE
         let nodeSpacingX, nodeSpacingY;
         
         if (currentOrientation === 'horizontal') {
-          nodeSpacingX = CARD_HEIGHT + 40; // Vertical spacing between siblings
-          nodeSpacingY = CARD_WIDTH + 100;  // Horizontal spacing between levels
+          nodeSpacingX = CARD_HEIGHT + 35;
+          nodeSpacingY = CARD_WIDTH + 80;
           tree = d3.tree().nodeSize([nodeSpacingX, nodeSpacingY]);
         } else {
-          nodeSpacingX = CARD_WIDTH + 60;   // Horizontal spacing between siblings
-          nodeSpacingY = CARD_HEIGHT + 60;  // Vertical spacing between levels
+          // Vertical: espacio suficiente para evitar solapamiento
+          nodeSpacingX = CARD_WIDTH + 50;   // Espacio horizontal entre hermanos
+          nodeSpacingY = CARD_HEIGHT + 100; // Espacio vertical entre niveles
           tree = d3.tree().nodeSize([nodeSpacingX, nodeSpacingY]);
         }
         
         tree(root);
 
-        // Links (conexiones)
+        // Links
         const linksGroup = g.append("g")
           .attr("class", "links-layer")
           .attr("fill", "none")
@@ -731,7 +921,6 @@
           .attr("stroke-width", 2);
         
         if (currentOrientation === 'horizontal') {
-          // Horizontal: d.x es vertical, d.y es horizontal
           linksGroup.selectAll("path")
             .data(root.links())
             .join("path")
@@ -748,7 +937,6 @@
                         ${targetX},${targetY}`;
             });
         } else {
-          // Vertical: d.x es horizontal, d.y es vertical
           linksGroup.selectAll("path")
             .data(root.links())
             .join("path")
@@ -782,109 +970,89 @@
           })
           .attr("class", "node-group");
 
-        // Tarjeta principal con fondo blanco
+        // Tarjeta
         node.append("rect")
           .attr("width", CARD_WIDTH)
           .attr("height", CARD_HEIGHT)
-          .attr("rx", 8)
+          .attr("rx", 6)
           .attr("fill", "#ffffff")
           .attr("stroke", "#e2e3e4")
-          .attr("stroke-width", 2)
+          .attr("stroke-width", 1.5)
           .attr("class", "node-card")
           .on("click", (event, d) => showModal(d.data));
 
-        // Barra superior con color por departamento
+        // Barra superior
         node.append("rect")
           .attr("width", CARD_WIDTH)
-          .attr("height", 5)
-          .attr("rx", 8)
+          .attr("height", 4)
+          .attr("rx", 6)
           .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
 
-        // Grupo de texto con clipPath para evitar desbordamiento
-        const textGroup = node.append("g")
-          .attr("clip-path", "url(#card-clip-" + Math.random().toString(36).substr(2, 9) + ")");
-        
-        // Crear clipPath único para cada nodo
-        node.each(function(d, i) {
-          const clipId = `card-clip-${i}`;
-          d3.select(this).select('g').attr("clip-path", `url(#${clipId})`);
-          
-          svg.select("defs").append("clipPath")
-            .attr("id", clipId)
-            .append("rect")
-            .attr("width", CARD_WIDTH - 16)
-            .attr("height", CARD_HEIGHT - 24)
-            .attr("x", 8)
-            .attr("y", 12);
-        });
-
-        // Nombre (truncado si es muy largo)
+        // Nombre
         node.append("text")
-          .attr("y", 24)
-          .attr("x", 12)
+          .attr("y", 22)
+          .attr("x", 10)
           .text(d => {
             const name = d.data.name;
-            return name.length > 28 ? name.substring(0, 26) + '...' : name;
+            return name.length > 26 ? name.substring(0, 24) + '...' : name;
           })
-          .attr("font-size", "12px")
+          .attr("font-size", "11px")
           .attr("font-weight", "700")
           .attr("fill", "#000000");
 
-        // Puesto (truncado si es muy largo)
+        // Rol
         node.append("text")
-          .attr("y", 42)
-          .attr("x", 12)
+          .attr("y", 38)
+          .attr("x", 10)
           .text(d => {
             const role = d.data.role;
-            return role.length > 32 ? role.substring(0, 30) + '...' : role;
+            return role.length > 30 ? role.substring(0, 28) + '...' : role;
           })
-          .attr("font-size", "10px")
+          .attr("font-size", "9px")
           .attr("font-weight", "500")
-          .attr("fill", "#666666")
-          .attr("text-transform", "uppercase");
+          .attr("fill", "#666666");
 
-        // Segunda línea del puesto si es necesario
-        node.filter(d => d.data.role.length > 32).append("text")
-          .attr("y", 54)
-          .attr("x", 12)
+        // Segunda línea del rol si es muy largo
+        node.filter(d => d.data.role.length > 30).append("text")
+          .attr("y", 50)
+          .attr("x", 10)
           .text(d => {
             const role = d.data.role;
-            if (role.length > 32) {
-              const secondLine = role.substring(30).trim();
-              return secondLine.length > 30 ? secondLine.substring(0, 28) + '...' : secondLine;
+            if (role.length > 30) {
+              const rest = role.substring(28).trim();
+              return rest.length > 28 ? rest.substring(0, 26) + '...' : rest;
             }
             return '';
           })
-          .attr("font-size", "10px")
+          .attr("font-size", "9px")
           .attr("font-weight", "500")
           .attr("fill", "#666666");
 
         // Departamento
         node.filter(d => d.data.department).append("text")
-          .attr("y", CARD_HEIGHT - 10)
-          .attr("x", 12)
+          .attr("y", CARD_HEIGHT - 8)
+          .attr("x", 10)
           .text(d => {
             const dept = d.data.department.toUpperCase();
-            return dept.length > 20 ? dept.substring(0, 18) + '...' : dept;
+            return dept.length > 18 ? dept.substring(0, 16) + '...' : dept;
           })
-          .attr("font-size", "9px")
+          .attr("font-size", "8px")
           .attr("font-weight", "700")
-          .attr("letter-spacing", "0.5px")
           .attr("fill", d => departmentColors[d.data.department] || '#0071B9');
 
-        // Indicador de reportes directos
+        // Indicador de reportes
         node.filter(d => d.children && d.children.length > 0).append("g")
-          .attr("transform", `translate(${CARD_WIDTH - 24}, ${CARD_HEIGHT / 2})`)
+          .attr("transform", `translate(${CARD_WIDTH - 20}, ${CARD_HEIGHT / 2})`)
           .call(g => {
             g.append("circle")
-              .attr("r", 12)
+              .attr("r", 10)
               .attr("fill", "#0071B9")
               .attr("stroke", "#ffffff")
               .attr("stroke-width", 2);
             g.append("text")
               .attr("text-anchor", "middle")
               .attr("dy", "0.35em")
-              .attr("font-size", "10px")
+              .attr("font-size", "9px")
               .attr("font-weight", "700")
               .attr("fill", "#ffffff")
               .text(d => d.children.length);
@@ -902,16 +1070,11 @@
         btn.textContent = currentOrientation === 'horizontal' ? '↔️' : '↕️';
         btn.classList.toggle('active', currentOrientation === 'vertical');
         
-        const filtered = currentFilter === 'all' 
-          ? allData 
-          : allData.filter(p => p.department === currentFilter);
-        
-        renderChart(filtered);
-        resetZoom();
+        applyFilter();
       }
 
       // ============================================
-      // BÚSQUEDA Y FILTROS
+      // BÚSQUEDA
       // ============================================
       
       document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -933,22 +1096,8 @@
         });
       });
 
-      function filterDept(dept) {
-        currentFilter = dept;
-        
-        const filtered = dept === 'all' 
-          ? allData 
-          : allData.filter(p => p.department === dept);
-        
-        document.getElementById('employeeCount').innerHTML = 
-          `<span class="font-bold">${filtered.length}</span>/${allData.length}`;
-        
-        renderChart(filtered);
-        resetZoom();
-      }
-
       // ============================================
-      // MODAL DE DETALLES
+      // MODAL
       // ============================================
       
       function showModal(data) {
@@ -969,7 +1118,6 @@
           photoImg.classList.remove('hidden');
           initialsEl.classList.add('hidden');
           
-          // Manejar error de carga de imagen
           photoImg.onerror = function() {
             photoImg.classList.add('hidden');
             initialsEl.classList.remove('hidden');
@@ -981,7 +1129,7 @@
           initialsEl.textContent = initials;
         }
         
-        // Descripción del puesto
+        // Descripción
         if (data.description && data.description.trim() !== '') {
           document.getElementById('modalDescSection').classList.remove('hidden');
           document.getElementById('modalDesc').textContent = data.description;
@@ -1017,7 +1165,7 @@
       }
 
       // ============================================
-      // CONTROLES DE ZOOM
+      // ZOOM
       // ============================================
       
       function resetZoom() {
@@ -1036,22 +1184,19 @@
       }
 
       // ============================================
-      // FUNCIONES DE EXPORTACIÓN MEJORADAS
+      // EXPORTACIÓN
       // ============================================
       
       function toggleDropdown(event) {
         event.stopPropagation();
         document.getElementById('exportDropdown').classList.toggle('show');
+        document.getElementById('deptDropdownContent').classList.remove('show');
       }
 
       window.onclick = function(event) {
-        if (!event.target.matches('.btn-export') && !event.target.closest('.btn-export')) {
-          const dropdowns = document.getElementsByClassName("dropdown-content");
-          for (let i = 0; i < dropdowns.length; i++) {
-            if (dropdowns[i].classList.contains('show')) {
-              dropdowns[i].classList.remove('show');
-            }
-          }
+        if (!event.target.closest('.dropdown') && !event.target.closest('.dept-dropdown')) {
+          document.getElementById('exportDropdown').classList.remove('show');
+          document.getElementById('deptDropdownContent').classList.remove('show');
         }
       }
       
@@ -1090,49 +1235,35 @@
         
         try {
           const bbox = getBoundingBoxOfVisibleNodes();
-          const margin = 60;
+          const margin = 50;
           
           const contentWidth = bbox.maxX - bbox.minX + margin * 2;
           const contentHeight = bbox.maxY - bbox.minY + margin * 2;
           
-          // Escala para buena calidad
           const scale = 2;
           const finalWidth = Math.ceil(contentWidth * scale);
           const finalHeight = Math.ceil(contentHeight * scale);
           
-          // Crear SVG temporal
           const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           tempSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
           tempSvg.setAttribute('width', finalWidth);
           tempSvg.setAttribute('height', finalHeight);
           tempSvg.setAttribute('viewBox', `${bbox.minX - margin} ${bbox.minY - margin} ${contentWidth} ${contentHeight}`);
           
-          // Fondo blanco
           const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
           bgRect.setAttribute('width', '100%');
           bgRect.setAttribute('height', '100%');
           bgRect.setAttribute('fill', '#ffffff');
           tempSvg.appendChild(bgRect);
           
-          // Estilos embebidos
           const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
-          styleEl.textContent = `
-            text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }
-          `;
+          styleEl.textContent = `text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }`;
           tempSvg.appendChild(styleEl);
           
-          // Copiar defs (clipPaths)
-          const defs = svg.select("defs").node();
-          if (defs) {
-            tempSvg.appendChild(defs.cloneNode(true));
-          }
-          
-          // Clonar contenido
           const clonedG = g.node().cloneNode(true);
           clonedG.removeAttribute('transform');
           tempSvg.appendChild(clonedG);
           
-          // Serializar y convertir a imagen
           const serializer = new XMLSerializer();
           const svgString = serializer.serializeToString(tempSvg);
           const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
@@ -1160,21 +1291,19 @@
           };
           
           img.onerror = function() {
-            // Fallback: descargar SVG
             const link = document.createElement('a');
             const timestamp = new Date().toISOString().split('T')[0];
             link.download = `Mondraker_Org_Chart_${timestamp}.svg`;
             link.href = url;
             link.click();
-            
             document.getElementById('exportingOverlay').classList.add('hidden');
           };
           
           img.src = url;
           
         } catch (error) {
-          console.error('Error exporting PNG:', error);
-          alert('Error exporting chart. Please try again.');
+          console.error('Error:', error);
+          alert('Error exporting. Please try again.');
           document.getElementById('exportingOverlay').classList.add('hidden');
         }
       }
@@ -1187,12 +1316,11 @@
         
         try {
           const bbox = getBoundingBoxOfVisibleNodes();
-          const margin = 60;
+          const margin = 50;
           
           const contentWidth = bbox.maxX - bbox.minX + margin * 2;
           const contentHeight = bbox.maxY - bbox.minY + margin * 2;
           
-          // Determinar orientación del PDF
           const aspectRatio = contentWidth / contentHeight;
           const orientation = aspectRatio > 1 ? 'landscape' : 'portrait';
           
@@ -1207,7 +1335,6 @@
           const pdfHeight = pdf.internal.pageSize.getHeight();
           const pdfMargin = 10;
           
-          // Calcular escala
           const availableWidth = pdfWidth - pdfMargin * 2;
           const availableHeight = pdfHeight - pdfMargin * 2;
           const scaleX = availableWidth / (contentWidth * 0.264583);
@@ -1219,7 +1346,6 @@
           const xOffset = (pdfWidth - imgWidth) / 2;
           const yOffset = (pdfHeight - imgHeight) / 2;
           
-          // Crear SVG temporal
           const renderScale = 2;
           const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           tempSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -1236,11 +1362,6 @@
           const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
           styleEl.textContent = `text { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; }`;
           tempSvg.appendChild(styleEl);
-          
-          const defs = svg.select("defs").node();
-          if (defs) {
-            tempSvg.appendChild(defs.cloneNode(true));
-          }
           
           const clonedG = g.node().cloneNode(true);
           clonedG.removeAttribute('transform');
@@ -1273,7 +1394,7 @@
           };
           
           img.onerror = function() {
-            alert('Error generating PDF. Please try PNG export instead.');
+            alert('Error generating PDF.');
             URL.revokeObjectURL(url);
             document.getElementById('exportingOverlay').classList.add('hidden');
           };
@@ -1281,8 +1402,8 @@
           img.src = url;
           
         } catch (error) {
-          console.error('Error exporting PDF:', error);
-          alert('Error exporting chart. Please try again.');
+          console.error('Error:', error);
+          alert('Error exporting. Please try again.');
           document.getElementById('exportingOverlay').classList.add('hidden');
         }
       }
@@ -1296,20 +1417,14 @@
       // ============================================
       
       function initializeApp() {
-        console.log('🚀 Starting Mondraker Organizational Chart...');
-        
         if (typeof d3 === 'undefined') {
-          console.error('❌ D3 is not available');
-          document.getElementById('employeeCount').innerHTML = 
-            '<span class="text-red-500">⚠️ Error: D3 not loaded</span>';
+          document.getElementById('employeeCount').innerHTML = '<span class="text-red-500">⚠️ Error</span>';
           return;
         }
-        
         loadData();
       }
 
       if (typeof d3 !== 'undefined' && typeof window.jspdf !== 'undefined') {
-        console.log('✅ Libraries already loaded, initializing immediately');
         initializeApp();
       }
     </script>
