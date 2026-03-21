@@ -417,9 +417,218 @@
         .search-mobile-hidden {
           display: none;
         }
-        
+
         #chart-container {
           padding-top: 48px !important;
+        }
+      }
+
+      /* ============================================ */
+      /* LANGUAGE TOGGLE                             */
+      /* ============================================ */
+      .lang-toggle {
+        display: flex;
+        align-items: center;
+        background: #e2e3e4;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 32px;
+      }
+
+      .lang-btn {
+        padding: 0 8px;
+        height: 100%;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 700;
+        color: #666;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .lang-btn.active {
+        background: #0071B9;
+        color: white;
+      }
+
+      /* ============================================ */
+      /* CHAT PANEL                                  */
+      /* ============================================ */
+      .chat-fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 52px;
+        height: 52px;
+        background: #0071B9;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(0, 113, 185, 0.4);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 199;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+      }
+
+      .chat-fab:hover {
+        background: #005a94;
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(0, 113, 185, 0.5);
+      }
+
+      .chat-fab.panel-open {
+        transform: scale(0.85);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .chat-panel {
+        position: fixed;
+        bottom: 0;
+        right: 20px;
+        width: 360px;
+        max-height: 520px;
+        background: #ffffff;
+        border: 2px solid #e2e3e4;
+        border-bottom: none;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .chat-panel.open {
+        transform: translateY(0);
+      }
+
+      .chat-header {
+        padding: 14px 16px;
+        border-bottom: 2px solid #e2e3e4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        background: #000000;
+        border-radius: 14px 14px 0 0;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 200px;
+      }
+
+      .chat-messages::-webkit-scrollbar { width: 4px; }
+      .chat-messages::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 2px; }
+      .chat-messages::-webkit-scrollbar-thumb { background: #0071B9; border-radius: 2px; }
+
+      .chat-message {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .chat-message.user { align-items: flex-end; }
+      .chat-message.assistant { align-items: flex-start; }
+
+      .chat-bubble {
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 85%;
+        word-break: break-word;
+      }
+
+      .chat-message.user .chat-bubble {
+        background: #0071B9;
+        color: #ffffff;
+        border-radius: 12px 12px 2px 12px;
+      }
+
+      .chat-message.assistant .chat-bubble {
+        background: #f3f4f6;
+        color: #000000;
+        border-radius: 12px 12px 12px 2px;
+      }
+
+      .chat-input-area {
+        padding: 12px;
+        border-top: 2px solid #e2e3e4;
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+
+      .chat-input {
+        flex: 1;
+        padding: 10px 14px;
+        border: 2px solid #e2e3e4;
+        border-radius: 8px;
+        font-size: 13px;
+        transition: all 0.3s;
+        font-family: 'Inter', sans-serif;
+        resize: none;
+        height: 40px;
+        line-height: 1.2;
+      }
+
+      .chat-input:focus {
+        outline: none;
+        border-color: #0071B9;
+        box-shadow: 0 0 0 3px rgba(0, 113, 185, 0.1);
+      }
+
+      .chat-send-btn {
+        background: #0071B9;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        flex-shrink: 0;
+        font-size: 16px;
+      }
+
+      .chat-send-btn:hover { background: #005a94; }
+      .chat-send-btn:disabled { background: #e2e3e4; cursor: not-allowed; }
+
+      @media (max-width: 768px) {
+        .chat-panel {
+          width: 100%;
+          right: 0;
+          border-radius: 16px 16px 0 0;
+          border-left: none;
+          border-right: none;
+          max-height: 60vh;
+        }
+        .chat-fab {
+          bottom: 16px;
+          right: 16px;
+          width: 46px;
+          height: 46px;
+          font-size: 20px;
         }
       }
     </style>
@@ -526,12 +735,58 @@
                 <button onclick="exportToPDF()">📄 PDF</button>
               </div>
             </div>
+
+            <!-- Language Toggle -->
+            <div class="lang-toggle hide-mobile" title="Toggle description language">
+              <button class="lang-btn active" id="langBtnES" onclick="setLanguage('es')">ES</button>
+              <button class="lang-btn" id="langBtnEN" onclick="setLanguage('en')">EN</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Contenedor del Organigrama - altura completa menos header -->
       <div id="chart-container" class="w-full h-full pt-14"></div>
+
+      <!-- ============================================ -->
+      <!-- CHAT PANEL (AI ASSISTANT)                  -->
+      <!-- ============================================ -->
+
+      <!-- Floating Action Button -->
+      <button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Ask about the org chart">
+        💬
+      </button>
+
+      <!-- Chat Slide-up Panel -->
+      <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+          <div class="flex items-center gap-2">
+            <span class="text-white font-bold text-sm tracking-wider">MONDRAKER</span>
+            <span class="text-gray-400 text-xs">· HR Assistant</span>
+          </div>
+          <button onclick="toggleChat()" class="text-gray-400 hover:text-white text-xl transition leading-none">&times;</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-message assistant">
+            <div class="chat-bubble">
+              👋 Hi! I can help you find who is responsible for what at Mondraker.<br><br>
+              Try asking: <em>"Who handles French customers?"</em> or <em>"Who is responsible for logistics?"</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <textarea
+            class="chat-input"
+            id="chatInput"
+            placeholder="Ask about the org chart..."
+            rows="1"
+            onkeydown="handleChatKeydown(event)"
+          ></textarea>
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" title="Send">&#10148;</button>
+        </div>
+      </div>
 
       <!-- Modal de Detalles -->
       <div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" onclick="closeModal(event)">
@@ -675,7 +930,17 @@
       // ============================================
       // CONFIGURACIÓN
       // ============================================
-      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxZ8ZW6fpynxQfcUBzckrooqlo28-QUYI8Z0Mix6IbdJh_98QOGx2ICDsy6NTecpPJ/exec?key=MONDRAKER_ORG_2026.02_script';
+      const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxM3j2tHZgS7aIOWSyPx1Ao3xYePXCDzxlxtZGhLobqLfJdY_xHzc4cKYo3_WZaUoCJ/exec?key=MONDRAKER_ORG_2026.02_script';
+
+      // Proxy URL for AI features (same Apps Script deployment, GET method)
+      // The API key is stored securely in Apps Script Script Properties — not here
+      const PROXY_URL = 'https://script.google.com/macros/s/AKfycbxM3j2tHZgS7aIOWSyPx1Ao3xYePXCDzxlxtZGhLobqLfJdY_xHzc4cKYo3_WZaUoCJ/exec';
+
+      // Current display language: 'es' = original (Spanish), 'en' = translated to English
+      let currentLanguage = 'es';
+
+      // Cache translated descriptions to avoid repeat API calls within a session
+      const translationCache = {};
 
       // Variables globales
       let allData = [];
@@ -1100,24 +1365,24 @@
       // MODAL
       // ============================================
       
-      function showModal(data) {
+      async function showModal(data) {
         document.getElementById('modalName').textContent = data.name;
         document.getElementById('modalRoleHeader').textContent = data.role;
-        
+
         const deptElement = document.getElementById('modalDept');
         deptElement.textContent = data.department || 'N/A';
         deptElement.style.color = departmentColors[data.department] || '#0071B9';
-        
-        // Foto o iniciales
+
+        // Photo or initials
         const initials = data.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const initialsEl = document.getElementById('modalInitials');
         const photoImg = document.getElementById('modalPhotoImg');
-        
+
         if (data.photo && data.photo.trim() !== '') {
           photoImg.src = data.photo;
           photoImg.classList.remove('hidden');
           initialsEl.classList.add('hidden');
-          
+
           photoImg.onerror = function() {
             photoImg.classList.add('hidden');
             initialsEl.classList.remove('hidden');
@@ -1128,15 +1393,7 @@
           initialsEl.classList.remove('hidden');
           initialsEl.textContent = initials;
         }
-        
-        // Descripción
-        if (data.description && data.description.trim() !== '') {
-          document.getElementById('modalDescSection').classList.remove('hidden');
-          document.getElementById('modalDesc').textContent = data.description;
-        } else {
-          document.getElementById('modalDescSection').classList.add('hidden');
-        }
-        
+
         if (data.email) {
           document.getElementById('modalEmailSection').classList.remove('hidden');
           document.getElementById('modalEmail').textContent = data.email;
@@ -1144,18 +1401,42 @@
         } else {
           document.getElementById('modalEmailSection').classList.add('hidden');
         }
-        
+
         if (data.phone) {
           document.getElementById('modalPhoneSection').classList.remove('hidden');
           document.getElementById('modalPhone').textContent = data.phone;
         } else {
           document.getElementById('modalPhoneSection').classList.add('hidden');
         }
-        
+
         const reports = data.children ? data.children.length : 0;
         document.getElementById('modalReports').textContent = reports === 0 ? 'None' : `${reports} people`;
-        
+
+        // Show modal immediately — description loads after (may need translation)
         document.getElementById('modal').classList.remove('hidden');
+
+        // Job description — translate if EN mode is active
+        if (data.description && data.description.trim() !== '') {
+          document.getElementById('modalDescSection').classList.remove('hidden');
+
+          if (currentLanguage === 'en') {
+            // Show loading state while waiting for translation
+            document.getElementById('modalDesc').innerHTML =
+              '<em class="text-gray-400 text-xs" style="display:flex;align-items:center;gap:6px;">' +
+              '<span class="loading" style="width:10px;height:10px;border-width:1.5px;"></span>' +
+              'Translating...</em>';
+
+            const translated = await translateText(data.description);
+            // Only update if modal is still open (user may have closed it)
+            if (!document.getElementById('modal').classList.contains('hidden')) {
+              document.getElementById('modalDesc').textContent = translated;
+            }
+          } else {
+            document.getElementById('modalDesc').textContent = data.description;
+          }
+        } else {
+          document.getElementById('modalDescSection').classList.add('hidden');
+        }
       }
 
       function closeModal(event) {
@@ -1411,6 +1692,147 @@
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeModal();
       });
+
+      // ============================================
+      // IDIOMA / TRADUCCIÓN
+      // ============================================
+
+      // Switch the active language button in the header
+      function setLanguage(lang) {
+        currentLanguage = lang;
+        document.getElementById('langBtnES').classList.toggle('active', lang === 'es');
+        document.getElementById('langBtnEN').classList.toggle('active', lang === 'en');
+        console.log(`🔄 Language set to: ${lang}`);
+      }
+
+      // Translate a text via the Apps Script proxy (uses Anthropic API server-side).
+      // Uses GET to avoid the POST→GET redirect issue with Google Apps Script.
+      // Results are cached in translationCache to avoid duplicate API calls.
+      async function translateText(text) {
+        if (!text || text.trim() === '') return text;
+
+        // Return cached result if available
+        if (translationCache[text]) {
+          console.log('✅ Translation served from cache');
+          return translationCache[text];
+        }
+
+        console.log('🔄 Sending text for translation...');
+
+        try {
+          // Truncate very long descriptions to stay within safe URL length limits
+          const safeText = text.length > 3000 ? text.substring(0, 3000) + '…' : text;
+          const url = PROXY_URL + '?action=translate&text=' + encodeURIComponent(safeText);
+
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const result = await response.json();
+          if (result.error) throw new Error(result.error);
+
+          translationCache[text] = result.text;
+          console.log('✅ Translation complete');
+          return result.text;
+
+        } catch (error) {
+          console.error('❌ Translation error:', error);
+          return text; // Fall back to original text on error
+        }
+      }
+
+      // ============================================
+      // AI CHATBOT
+      // ============================================
+
+      let chatIsOpen = false;
+
+      // Toggle the chat panel open/closed
+      function toggleChat() {
+        chatIsOpen = !chatIsOpen;
+        document.getElementById('chatPanel').classList.toggle('open', chatIsOpen);
+        document.getElementById('chatFab').classList.toggle('panel-open', chatIsOpen);
+
+        if (chatIsOpen) {
+          // Focus input after animation ends
+          setTimeout(() => document.getElementById('chatInput').focus(), 350);
+        }
+      }
+
+      // Allow sending with Enter (Shift+Enter for newline)
+      function handleChatKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendChatMessage();
+        }
+      }
+
+      // Add a message bubble to the chat panel and return the bubble element
+      function renderChatMessage(sender, text) {
+        const container = document.getElementById('chatMessages');
+        const messageEl = document.createElement('div');
+        messageEl.className = `chat-message ${sender}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        bubble.textContent = text;
+
+        messageEl.appendChild(bubble);
+        container.appendChild(messageEl);
+        container.scrollTop = container.scrollHeight;
+
+        return bubble; // Return reference for updating (e.g., loading → response)
+      }
+
+      // Build a compact context string from all employee data
+      function buildOrgContext(data) {
+        return data.map(p =>
+          `Name: ${p.name} | Role: ${p.role} | Dept: ${p.department}` +
+          (p.description ? ` | Responsibilities: ${p.description}` : '')
+        ).join('\n');
+      }
+
+      // Send user message to the chatbot via the Apps Script proxy.
+      // Uses GET to avoid the POST→GET redirect issue with Google Apps Script.
+      // The Apps Script reads the org data from the spreadsheet server-side,
+      // so we only need to send the user's message (no large context in the URL).
+      async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('chatSendBtn');
+        const message = input.value.trim();
+
+        if (!message || sendBtn.disabled) return;
+
+        // Show user message and clear input
+        renderChatMessage('user', message);
+        input.value = '';
+        sendBtn.disabled = true;
+
+        // Show loading indicator
+        const loadingBubble = renderChatMessage('assistant', '');
+        loadingBubble.innerHTML =
+          '<span class="loading" style="width:12px;height:12px;border-width:2px;"></span>';
+
+        try {
+          const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message);
+          const response = await fetch(url);
+
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const result = await response.json();
+          if (result.error) throw new Error(result.error);
+
+          loadingBubble.textContent = result.text;
+          console.log('✅ AI response received');
+
+        } catch (error) {
+          console.error('❌ Chat error:', error);
+          loadingBubble.textContent = 'Sorry, I could not reach the assistant. Please try again.';
+        }
+
+        sendBtn.disabled = false;
+        document.getElementById('chatMessages').scrollTop =
+          document.getElementById('chatMessages').scrollHeight;
+      }
 
       // ============================================
       // INICIALIZACIÓN
