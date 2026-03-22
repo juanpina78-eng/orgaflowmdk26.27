@@ -1788,6 +1788,9 @@
 
       let chatIsOpen = false;
 
+      // Stores conversation history for multi-turn chat (last 6 exchanges max)
+      let chatHistory = [];
+
       // Toggle the chat panel open/closed
       function toggleChat() {
         chatIsOpen = !chatIsOpen;
@@ -1834,9 +1837,7 @@
       }
 
       // Send user message to the chatbot via the Apps Script proxy.
-      // Uses GET to avoid the POST→GET redirect issue with Google Apps Script.
-      // The Apps Script reads the org data from the spreadsheet server-side,
-      // so we only need to send the user's message (no large context in the URL).
+      // Passes conversation history so Gemini remembers previous exchanges.
       async function sendChatMessage() {
         const input = document.getElementById('chatInput');
         const sendBtn = document.getElementById('chatSendBtn');
@@ -1854,21 +1855,32 @@
         loadingBubble.innerHTML =
           '<span class="loading" style="width:12px;height:12px;border-width:2px;"></span>';
 
+        // Build compact history (last 6 exchanges, truncated to avoid URL length issues)
+        const compactHistory = chatHistory.slice(-6).map(h => ({
+          r: h.role === 'user' ? 'u' : 'a',
+          t: h.text.substring(0, 300)
+        }));
+        const historyParam = compactHistory.length > 0
+          ? '&history=' + encodeURIComponent(JSON.stringify(compactHistory))
+          : '';
+
+        const attemptFetch = async () => {
+          const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message) + historyParam;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        };
+
         try {
-          const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message);
-
-          let response = await fetch(url);
-
-          // If first attempt fails, retry once after 1.5 seconds
-          if (!response.ok) {
+          let result;
+          try {
+            result = await attemptFetch();
+          } catch (firstError) {
             console.log('🔄 First attempt failed, retrying...');
-            await new Promise(r => setTimeout(r, 1500));
-            response = await fetch(url);
+            await new Promise(r => setTimeout(r, 2000));
+            result = await attemptFetch();
           }
 
-          const result = await response.json();
-
-          // Show the actual error instead of a generic message
           if (result.error) {
             console.error('❌ Script error:', result.error);
             loadingBubble.textContent = 'Could not answer: ' + result.error;
@@ -1879,22 +1891,15 @@
           loadingBubble.textContent = result.text;
           console.log('✅ AI response received');
 
+          // Save exchange to history
+          chatHistory.push({ role: 'user', text: message });
+          chatHistory.push({ role: 'assistant', text: result.text });
+          // Keep max 12 entries (6 exchanges)
+          if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+
         } catch (error) {
-          console.error('❌ Chat error:', error);
-          // Auto-retry once on network error
-          try {
-            console.log('🔄 Retrying after network error...');
-            await new Promise(r => setTimeout(r, 2000));
-            const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message);
-            const response = await fetch(url);
-            const result = await response.json();
-            if (result.error) throw new Error(result.error);
-            loadingBubble.textContent = result.text;
-            console.log('✅ AI response received on retry');
-          } catch (retryError) {
-            console.error('❌ Retry also failed:', retryError);
-            loadingBubble.textContent = 'Sorry, I could not reach the assistant. Please try again.';
-          }
+          console.error('❌ Chat error after retry:', error);
+          loadingBubble.textContent = 'Sorry, I could not reach the assistant. Please try again.';
         }
 
         sendBtn.disabled = false;
