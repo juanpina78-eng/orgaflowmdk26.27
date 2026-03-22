@@ -832,7 +832,14 @@
             
             <!-- Descripción del puesto -->
             <div id="modalDescSection" class="bg-blue-50 rounded-lg p-3 md:p-4 border border-blue-200 hidden">
-              <p class="text-[10px] md:text-xs text-blue-600 uppercase tracking-wider mb-2 font-semibold">Job Description</p>
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-[10px] md:text-xs text-blue-600 uppercase tracking-wider font-semibold">Job Description</p>
+                <!-- Language toggle — only shown on mobile (desktop uses the header toggle) -->
+                <div class="lang-toggle md:hidden" id="modalLangToggle">
+                  <button class="lang-btn active" id="modalLangBtnES" onclick="setLanguage('es')">ES</button>
+                  <button class="lang-btn" id="modalLangBtnEN" onclick="setLanguage('en')">EN</button>
+                </div>
+              </div>
               <div class="description-box">
                 <p id="modalDesc" class="text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-line"></p>
               </div>
@@ -938,6 +945,9 @@
 
       // Current display language: 'es' = original (Spanish), 'en' = translated to English
       let currentLanguage = 'es';
+
+      // Stores the data of the employee currently shown in the modal (for live language switching)
+      let currentModalData = null;
 
       // Cache translated descriptions to avoid repeat API calls within a session
       const translationCache = {};
@@ -1366,6 +1376,7 @@
       // ============================================
       
       async function showModal(data) {
+        currentModalData = data;
         document.getElementById('modalName').textContent = data.name;
         document.getElementById('modalRoleHeader').textContent = data.role;
 
@@ -1697,12 +1708,43 @@
       // IDIOMA / TRADUCCIÓN
       // ============================================
 
-      // Switch the active language button in the header
-      function setLanguage(lang) {
+      // Switch the active language and update all toggle buttons (header + modal).
+      // If the modal is open and has a description, re-renders it in the new language.
+      async function setLanguage(lang) {
         currentLanguage = lang;
+
+        // Update header toggle (desktop)
         document.getElementById('langBtnES').classList.toggle('active', lang === 'es');
         document.getElementById('langBtnEN').classList.toggle('active', lang === 'en');
+
+        // Update modal toggle (mobile)
+        const mES = document.getElementById('modalLangBtnES');
+        const mEN = document.getElementById('modalLangBtnEN');
+        if (mES) mES.classList.toggle('active', lang === 'es');
+        if (mEN) mEN.classList.toggle('active', lang === 'en');
+
         console.log(`🔄 Language set to: ${lang}`);
+
+        // If modal is open and has a description, re-render it immediately
+        const modal = document.getElementById('modal');
+        const descSection = document.getElementById('modalDescSection');
+        if (!modal.classList.contains('hidden') &&
+            !descSection.classList.contains('hidden') &&
+            currentModalData && currentModalData.description) {
+
+          if (lang === 'en') {
+            document.getElementById('modalDesc').innerHTML =
+              '<em class="text-gray-400 text-xs" style="display:flex;align-items:center;gap:6px;">' +
+              '<span class="loading" style="width:10px;height:10px;border-width:1.5px;"></span>' +
+              'Translating...</em>';
+            const translated = await translateText(currentModalData.description);
+            if (!modal.classList.contains('hidden')) {
+              document.getElementById('modalDesc').textContent = translated;
+            }
+          } else {
+            document.getElementById('modalDesc').textContent = currentModalData.description;
+          }
+        }
       }
 
       // Translate a text via the Apps Script proxy (uses Anthropic API server-side).
