@@ -1814,19 +1814,45 @@
 
         try {
           const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message);
-          const response = await fetch(url);
 
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          let response = await fetch(url);
+
+          // If first attempt fails, retry once after 1.5 seconds
+          if (!response.ok) {
+            console.log('🔄 First attempt failed, retrying...');
+            await new Promise(r => setTimeout(r, 1500));
+            response = await fetch(url);
+          }
 
           const result = await response.json();
-          if (result.error) throw new Error(result.error);
+
+          // Show the actual error instead of a generic message
+          if (result.error) {
+            console.error('❌ Script error:', result.error);
+            loadingBubble.textContent = 'Could not answer: ' + result.error;
+            sendBtn.disabled = false;
+            return;
+          }
 
           loadingBubble.textContent = result.text;
           console.log('✅ AI response received');
 
         } catch (error) {
           console.error('❌ Chat error:', error);
-          loadingBubble.textContent = 'Sorry, I could not reach the assistant. Please try again.';
+          // Auto-retry once on network error
+          try {
+            console.log('🔄 Retrying after network error...');
+            await new Promise(r => setTimeout(r, 2000));
+            const url = PROXY_URL + '?action=chat&message=' + encodeURIComponent(message);
+            const response = await fetch(url);
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            loadingBubble.textContent = result.text;
+            console.log('✅ AI response received on retry');
+          } catch (retryError) {
+            console.error('❌ Retry also failed:', retryError);
+            loadingBubble.textContent = 'Sorry, I could not reach the assistant. Please try again.';
+          }
         }
 
         sendBtn.disabled = false;
