@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mondraker Organizational Chart</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23000000'/><text x='16' y='22' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-weight='800' font-size='15'>HR</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -614,6 +615,42 @@
       .chat-send-btn:hover { background: #005a94; }
       .chat-send-btn:disabled { background: #e2e3e4; cursor: not-allowed; }
 
+      /* Markdown rendering inside chat bubbles */
+      .chat-bubble strong { font-weight: 700; }
+      .chat-bubble em { font-style: italic; }
+
+      /* PDF export chips shown below AI responses */
+      .pdf-chips-container {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e3e4;
+      }
+      .pdf-chips-label {
+        font-size: 10px;
+        color: #868686;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .pdf-chip {
+        padding: 3px 10px;
+        background: #ffffff;
+        border: 1.5px solid #0071B9;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0071B9;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        white-space: nowrap;
+      }
+      .pdf-chip:hover {
+        background: #0071B9;
+        color: #ffffff;
+      }
+
       @media (max-width: 768px) {
         .chat-panel {
           width: 100%;
@@ -843,6 +880,11 @@
               <div class="description-box">
                 <p id="modalDesc" class="text-xs md:text-sm text-gray-700 leading-relaxed whitespace-pre-line"></p>
               </div>
+              <!-- PDF export button — shown only when description is available -->
+              <button id="modalPdfBtn" onclick="exportJobDescriptionToPDF()"
+                class="btn-export w-full py-2 rounded-lg text-xs mt-3 hidden flex items-center justify-center gap-2">
+                📄 Export Job Description as PDF
+              </button>
             </div>
           </div>
         </div>
@@ -1429,6 +1471,7 @@
         // Job description — translate if EN mode is active
         if (data.description && data.description.trim() !== '') {
           document.getElementById('modalDescSection').classList.remove('hidden');
+          document.getElementById('modalPdfBtn').classList.remove('hidden');
 
           if (currentLanguage === 'en') {
             // Show loading state while waiting for translation
@@ -1447,6 +1490,7 @@
           }
         } else {
           document.getElementById('modalDescSection').classList.add('hidden');
+          document.getElementById('modalPdfBtn').classList.add('hidden');
         }
       }
 
@@ -1700,6 +1744,165 @@
         }
       }
 
+      // Exports the job description of currentModalData as a branded A4 PDF.
+      // Uses jsPDF (already loaded). Captures the currently displayed description
+      // text so it exports the translated version if EN mode is active.
+      function exportJobDescriptionToPDF() {
+        if (!currentModalData) return;
+        if (!window.jspdf) { alert('PDF library not loaded. Please refresh.'); return; }
+
+        const data = currentModalData;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        const pw = pdf.internal.pageSize.getWidth();   // 210mm
+        const ph = pdf.internal.pageSize.getHeight();  // 297mm
+        const margin = 20;
+        const x = margin + 6; // content x (leaves room for sidebar)
+
+        // Helper: parse hex color to [r, g, b]
+        function hexRgb(hex) {
+          return [
+            parseInt(hex.slice(1, 3), 16),
+            parseInt(hex.slice(3, 5), 16),
+            parseInt(hex.slice(5, 7), 16)
+          ];
+        }
+
+        const deptHex = departmentColors[data.department] || '#0071B9';
+        const [dr, dg, db] = hexRgb(deptHex);
+
+        // ── BLACK HEADER ─────────────────────────────────────────
+        pdf.setFillColor(0, 0, 0);
+        pdf.rect(0, 0, pw, 28, 'F');
+
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(18);
+        pdf.text('MONDRAKER', margin, 17);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text('the way forward', margin, 24);
+
+        // ── BLUE ACCENT LINE ──────────────────────────────────────
+        pdf.setFillColor(0, 113, 185);
+        pdf.rect(0, 28, pw, 2.5, 'F');
+
+        // ── DEPARTMENT COLOR SIDEBAR ─────────────────────────────
+        pdf.setFillColor(dr, dg, db);
+        pdf.rect(0, 30.5, 5, ph - 30.5, 'F');
+
+        // ── EMPLOYEE NAME ─────────────────────────────────────────
+        let y = 44;
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(20);
+        pdf.text(data.name, x, y);
+        y += 9;
+
+        // ── ROLE ──────────────────────────────────────────────────
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(11);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(data.role || '', x, y);
+        y += 8;
+
+        // ── DEPARTMENT BADGE ──────────────────────────────────────
+        if (data.department) {
+          pdf.setFillColor(dr, dg, db);
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8);
+          const label = data.department.toUpperCase();
+          const badgeW = pdf.getTextWidth(label) + 8;
+          pdf.rect(x, y - 4, badgeW, 6.5, 'F');
+          pdf.text(label, x + 4, y + 0.5);
+          y += 12;
+        }
+
+        // ── CONTACT INFO ──────────────────────────────────────────
+        if (data.email || data.phone) {
+          pdf.setDrawColor(220, 220, 220);
+          pdf.setLineWidth(0.3);
+          pdf.line(x, y, pw - margin, y);
+          y += 7;
+
+          if (data.email) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(0, 113, 185);
+            pdf.text('Email: ' + data.email, x, y);
+            y += 6;
+          }
+          if (data.phone) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            pdf.setTextColor(60, 60, 60);
+            pdf.text('Phone: ' + data.phone, x, y);
+            y += 6;
+          }
+          y += 4;
+        }
+
+        // ── JOB DESCRIPTION ───────────────────────────────────────
+        // Use currently displayed text (may be translated) if available
+        const descEl = document.getElementById('modalDesc');
+        const descText = (descEl && descEl.textContent && descEl.textContent.trim() !== ''
+          && !descEl.textContent.includes('Translating'))
+          ? descEl.textContent
+          : (data.description || '');
+
+        if (descText) {
+          pdf.setDrawColor(220, 220, 220);
+          pdf.setLineWidth(0.3);
+          pdf.line(x, y, pw - margin, y);
+          y += 8;
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8);
+          pdf.setTextColor(0, 113, 185);
+          pdf.text('JOB DESCRIPTION', x, y);
+          y += 8;
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(9.5);
+          pdf.setTextColor(40, 40, 40);
+
+          const lines = pdf.splitTextToSize(descText, pw - margin - x - 2);
+          lines.forEach(line => {
+            if (y > ph - 22) {
+              pdf.addPage();
+              // Repeat sidebar on overflow page
+              pdf.setFillColor(dr, dg, db);
+              pdf.rect(0, 0, 5, ph, 'F');
+              y = 15;
+              pdf.setFont('helvetica', 'normal');
+              pdf.setFontSize(9.5);
+              pdf.setTextColor(40, 40, 40);
+            }
+            pdf.text(line, x, y);
+            y += 5.5;
+          });
+        }
+
+        // ── FOOTER ───────────────────────────────────────────────
+        pdf.setFillColor(245, 245, 245);
+        pdf.rect(0, ph - 14, pw, 14, 'F');
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(150, 150, 150);
+        const today = new Date().toLocaleDateString('en-GB', {
+          day: '2-digit', month: 'long', year: 'numeric'
+        });
+        pdf.text('CONFIDENTIAL  ·  Mondraker HR Department  ·  ' + today, margin, ph - 6);
+
+        // Save file
+        const safeName = data.name.replace(/[^a-zA-Z0-9 ]/g, '').trim().replace(/\s+/g, '_');
+        pdf.save('Mondraker_' + safeName + '_JobDescription_' + new Date().toISOString().split('T')[0] + '.pdf');
+      }
+
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeModal();
       });
@@ -1811,7 +2014,77 @@
         }
       }
 
-      // Add a message bubble to the chat panel and return the bubble element
+      // Escape HTML to prevent injection
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      // Convert Gemini markdown to safe HTML for display in the chat bubble.
+      // Handles: **bold**, *italic*, newlines, and bullet characters.
+      function parseMarkdown(text) {
+        return escapeHtml(text)
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*\n]+?)\*/g, '<em>$1</em>')
+          .replace(/\n/g, '<br>');
+      }
+
+      // Scan the AI response for employee names from allData.
+      // For each match with a job description, add a PDF export chip below the message.
+      function addPdfChipsToMessage(messageEl, responseText) {
+        if (!allData || allData.length === 0) return;
+
+        const textLower = responseText.toLowerCase();
+        const seen = new Set();
+        const mentioned = [];
+
+        allData.forEach(emp => {
+          if (!emp.description || emp.description.trim() === '') return;
+          if (seen.has(emp.id)) return;
+
+          const fullName = emp.name.toLowerCase();
+          const parts = fullName.split(/\s+/).filter(p => p.length > 3);
+          const fullMatch = textLower.includes(fullName);
+          const partMatches = parts.filter(p => textLower.includes(p)).length;
+
+          if (fullMatch || partMatches >= 2) {
+            seen.add(emp.id);
+            mentioned.push(emp);
+          }
+        });
+
+        if (mentioned.length === 0) return;
+
+        const container = document.createElement('div');
+        container.className = 'pdf-chips-container';
+
+        const label = document.createElement('span');
+        label.className = 'pdf-chips-label';
+        label.textContent = '📄 Export job description:';
+        container.appendChild(label);
+
+        const chips = document.createElement('div');
+        chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;';
+        mentioned.forEach(emp => {
+          const chip = document.createElement('button');
+          chip.className = 'pdf-chip';
+          chip.textContent = emp.name;
+          chip.title = emp.role + ' · ' + emp.department;
+          chip.onclick = () => {
+            currentModalData = emp;
+            exportJobDescriptionToPDF();
+          };
+          chips.appendChild(chip);
+        });
+
+        container.appendChild(chips);
+        messageEl.appendChild(container);
+      }
+
+      // Add a message bubble to the chat panel and return the bubble element.
+      // Assistant messages render markdown; user messages are plain-text escaped.
       function renderChatMessage(sender, text) {
         const container = document.getElementById('chatMessages');
         const messageEl = document.createElement('div');
@@ -1819,13 +2092,16 @@
 
         const bubble = document.createElement('div');
         bubble.className = 'chat-bubble';
-        bubble.textContent = text;
+        if (text) {
+          bubble.innerHTML = sender === 'assistant' ? parseMarkdown(text) : escapeHtml(text);
+        }
 
         messageEl.appendChild(bubble);
         container.appendChild(messageEl);
         container.scrollTop = container.scrollHeight;
 
-        return bubble; // Return reference for updating (e.g., loading → response)
+        bubble._messageEl = messageEl; // Store parent ref for PDF chips
+        return bubble;
       }
 
       // Build a compact context string from all employee data
@@ -1888,8 +2164,13 @@
             return;
           }
 
-          loadingBubble.textContent = result.text;
+          loadingBubble.innerHTML = parseMarkdown(result.text);
           console.log('✅ AI response received');
+
+          // Add PDF chips for any employees mentioned in the response
+          if (loadingBubble._messageEl) {
+            addPdfChipsToMessage(loadingBubble._messageEl, result.text);
+          }
 
           // Save exchange to history
           chatHistory.push({ role: 'user', text: message });
